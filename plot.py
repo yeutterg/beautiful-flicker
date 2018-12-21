@@ -4,7 +4,9 @@ import matplotlib.colors
 from matplotlib.ticker import PercentFormatter, ScalarFormatter
 
 """
+Plots the IEEE PAR 1789 graphic
 
+@param list data                            The data points as a list of tuples as [(freq, mod, 'Name')], where mod is <= 1
 @param tuple figsize [optional]             The (width,height) of the plotted figure
 @param string filename [optional]           If specified, will save plot as the specified filename
 @param bool showred [optional]              Whether to show the unsafe region in red
@@ -15,7 +17,7 @@ from matplotlib.ticker import PercentFormatter, ScalarFormatter
 @param bool supress [optional]              If True, the plot will not be shown
 """
 def ieee_par_1789_graphic(
-        figsize=(8,4), filename=None, showred=True, showyellow=True, noriskcolor=True, max_freq=3000, min_pct=0.1, 
+        data, figsize=(8,4), filename=None, showred=True, showyellow=True, noriskcolor=True, max_freq=3000, min_pct=0.1, 
         suppress=False
     ):
     # count minimum percent decimals and recompute 
@@ -58,6 +60,11 @@ def ieee_par_1789_graphic(
         highrisk = plt.Polygon(highrisk_region, fc='r', alpha=0.2)
         plt.gca().add_patch(highrisk)
 
+    # Plot the data
+    for pt in data:
+        plt.scatter(pt[0], pt[1], label=pt[2])
+    plt.legend()
+
     # save the figure if a filename was specified
     if filename:
         plt.savefig(filename, dpi=300)
@@ -67,6 +74,5 @@ def ieee_par_1789_graphic(
         plt.show()
 
 
-ieee_par_1789_graphic(min_pct=0.01, max_freq=10000)
-    
+# ieee_par_1789_graphic(data=[(120, 1, 'Test'), (60, 0.6, 'Test2')], min_pct=0.1)
     
