@@ -4,7 +4,7 @@ A set of tools to compute and display lighting flicker data.
 
 For example, it can output the IEEE PAR 1789-2015 flicker graphic:
 
-![IEEE 1789 Flicker Graphic](/out/Low_Blue_Flicker_Comparison.png)
+![IEEE 1789 Flicker Graphic](/out/Low%20Blue%20Flicker%20Comparison.png)
 
 This tool is an early work in progress!
 
