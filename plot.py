@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors
+import itertools
+
 from matplotlib.ticker import PercentFormatter, ScalarFormatter
 
 """
@@ -39,6 +41,7 @@ def ieee_par_1789_graphic(
     plt.gca().xaxis.set_major_formatter(ScalarFormatter())
     plt.gca().yaxis.set_major_formatter(PercentFormatter(1, decimals=decimals))
     plt.grid(which='both')
+    ax.set_axisbelow(True)
 
     # plot no risk region
     norisk_region = [[1, min_pct], [1, 0.001], [10, 0.001], [100, 0.01], [100, 0.03], [3000, 1], [max_freq, 1], [max_freq, min_pct], ]
@@ -61,8 +64,9 @@ def ieee_par_1789_graphic(
         plt.gca().add_patch(highrisk)
 
     # Plot the data
+    markers = itertools.cycle(('o', '^', 's', 'D', 'p', 'P'))
     for pt in data:
-        plt.scatter(pt[0], pt[1], label=pt[2])
+        plt.scatter(pt[0], pt[1], label=pt[2], marker=next(markers), alpha=1)
     plt.legend()
 
     # save the figure if a filename was specified
