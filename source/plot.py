@@ -78,5 +78,19 @@ def ieee_par_1789_graphic(
         plt.show()
 
 
+def frequency_graph(data: np.array, figsize=(8,4), suppress=False):
+    # Convert the dict to a list of tuples
+    # lists = data.items()
+    # x, y = zip(*lists)
+
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
+    ax.plot(data)
+
+    # show the plot
+    if not suppress:
+        plt.show()
+
+
+
 # ieee_par_1789_graphic(data=[(120, 1, 'Test'), (60, 0.6, 'Test2')], min_pct=0.1)
     
