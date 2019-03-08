@@ -5,18 +5,75 @@ import numpy as np
 from scipy.signal import savgol_filter, blackmanharris, argrelextrema
 from scipy.integrate import simps
 
-"""
-Imports a waveform CSV showing the 
 
-Note: skips the first line. Format should be [time, volt]
+class Waveform:
+    def __init__(self, filename):
+        self.data = import_waveform_csv(filename)
+        self.data = denoise(self.data)
+        self.framerate = get_framerate(self.data)
+        self.v_max = self.data[:,1].max()
+        self.v_min = self.data[:,1].min()
+        self.v_pp = self.v_max - self.v_min
+        self.v_avg = np.mean([self.v_max, self.v_min])  
+        self.frequency = frequency(self.data, self.framerate, self.v_avg)
+        self.period = 1 / self.frequency
+        self.one_period = self.get_n_periods()
+        self.flicker_index = self.get_flicker_index()
+        self.percent_flicker = percent_flicker(self.v_max, self.v_min)
+
+
+    """
+    Shortens the data to n periods
+
+    :param num_periods:     The number of periods to return
+    :returns:               The waveform truncated to the specified periods
+    """
+    def get_n_periods(self, num_periods=1):
+        # Slice the array to the first period (so we can find the rising edge average)
+        t_0 = self.data[0,0]
+        delta = self.data[1,0] - t_0
+        idx_1 = int(self.period / delta)
+        t_1 = self.data[idx_1,0]
+        
+        # Find the first instance of the average
+        idx_avg = find_nearest_idx_rising(self.data[:,1], self.v_avg)
+
+        # Slice the array to the number of periods and return
+        return self.data[idx_avg:idx_avg+num_periods*idx_1,:]
+
+
+    """
+    Gets the flicker index
+
+    :returns:       The flicker index
+    """
+    def get_flicker_index(self):
+        # Split the curve across the average
+        curve_top = [i if i > self.v_avg else self.v_avg for i in self.one_period[:,1]]
+
+        # Subtract the average from the top curve
+        curve_top = curve_top - self.v_avg
+
+        # Get the area under the curve for the top and all using Simpson's rule
+        area_top = simps(curve_top)
+        area_all = simps(self.one_period[:,1])
+
+        # Return the flicker index 
+        return area_top / area_all
+
+
+
 """
-def import_waveform_csv(filename:str, horizontal_units='us', horizontal_scale=2000,
-                        vertical_scale_volts=0.20, vertical_offset=0.0,
-                        sample_interval=0.0000000020000) -> np.array:
-    
-    data = np.genfromtxt(filename, delimiter=',')
-    return data
-    
+Imports a waveform from a CSV file
+
+Note: Format should be [time(seconds), volts] and header info should be removed
+
+:param filename:    The name of the CSV file
+:returns:           A 2D numpy array in the format [time(seconds), volts]
+"""
+def import_waveform_csv(filename:str) -> np.array:
+    return np.genfromtxt(filename, delimiter=',')
+
 
 """
 Applies the Savitzky-Golay Filter to remove noise
@@ -39,35 +96,6 @@ Gets the frame rate (samples per second) of the data
 """
 def get_framerate(data):
     return int(round(1/(data[1,0]-data[0,0])))
-
-
-"""
-Shortens the data to x periods
-
-:param data:            The waveform
-:param num_periods:     The number of periods to return
-:returns:               The data truncated to the specified periods
-"""
-def get_periods(data, num_periods=1):
-    # Get the period in seconds
-    period_s = period(data)
-
-    # Slice the array to the first period (so we can find the rising edge average)
-    t_0 = data[0,0]
-    delta = data[1,0] - t_0
-    idx_1 = int(period_s / delta)
-    t_1 = data[idx_1,0]
-
-    # Find the average
-    v_max = data[:,1].max()
-    v_min = data[:,1].min()
-    v_avg = np.mean([v_max, v_min])  
-    
-    # Find the first instance of average
-    idx_avg = find_nearest_idx_rising(data[:,1], v_avg)
-
-    # Slice the array to the number of periods and return
-    return data[idx_avg:idx_avg+num_periods*idx_1,:]
 
 
 """
@@ -105,18 +133,12 @@ def find_nearest_idx_rising(array, value):
 """
 Calculates the frequency by counting zero crossings
 
-:param data:    The waveform
-:returns:       The frequency, in Hz
+:param data:        The waveform
+:param framerate:   The frame rate (samples per second)
+:param v_avg:       The average voltage
+:returns:           The frequency, in Hz
 """
-def frequency(data):
-    # Get the frame rate
-    framerate = get_framerate(data)
-
-    # Get the min, max, and average
-    v_max = data[:,1].max()
-    v_min = data[:,1].min()
-    v_avg = np.mean([v_max, v_min])  # zero crossing
-
+def frequency(data, framerate, v_avg):
     # Center the data on zero
     zdata = data[:,1] - v_avg
 
@@ -128,52 +150,11 @@ def frequency(data):
 
 
 """
-Calculates the period
-
-:param data:    The waveform
-:returns:       The period, in seconds
-"""
-def period(data):
-    return 1 / frequency(data)
-
-
-"""
 Computes the percent flicker
 
-:param data:                The waveform
-:returns:                   The flicker percentage
+:param v_max:   The max voltage
+:param v_pp:    The peak-to-peak voltage
+:returns:       The flicker percentage
 """
-def pct_flicker(data):
-    v_max = data[:,1].max()
-    v_min = data[:,1].min()
-    v_pp = v_max - v_min
+def percent_flicker(v_max, v_pp):
     return v_pp / v_max * 100
-
-
-"""
-Gets the flicker index
-
-:param data:    The waveform
-:returns:       The flicker index
-"""
-def flicker_index(data):
-    # Get one period of the data
-    one_period = get_periods(data)
-
-    # Get the average
-    v_max = data[:,1].max()
-    v_min = data[:,1].min()
-    v_avg = np.mean([v_max, v_min])
-
-    # Split the curve across the average
-    curve_top = [i if i > v_avg else v_avg for i in one_period[:,1]]
-
-    # Subtract the average from the top curve
-    curve_top = curve_top - v_avg
-
-    # Get the area under the curve for the top and all using Simpson's rule
-    area_top = simps(curve_top)
-    area_all = simps(one_period[:,1])
-
-    # Return the flicker index 
-    return area_top / area_all
