@@ -84,6 +84,8 @@ def frequency_graph(data: np.array, figsize=(8,4), suppress=False):
     # x, y = zip(*lists)
 
     fig, ax = plt.subplots(1, 1, figsize=figsize)
+    ax.ylabel('Volts')
+    ax.xlabel('Seconds')
     ax.plot(data)
 
     # show the plot
