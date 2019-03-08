@@ -30,21 +30,39 @@ def denoise(data, window_length=1001):
     return data2
 
 
+"""
+Calculates the frequency by counting zero crossings
+
+:param data:    The waveform
+:returns:       The frequency, in Hz
+"""
 def frequency(data):
     # Get the frame rate
     framerate = int(round(1/(data[1,0]-data[0,0])))
 
-    # Compute Fourier transform of windowed signal
-    windowed = data[:,1] * blackmanharris(len(data[:,1]))
-    f = np.fft.rfft(windowed)
+    # Get the min, max, and average
+    v_max = data[:,1].max()
+    v_min = data[:,1].min()
+    v_avg = np.mean([v_max, v_min])  # zero crossing
 
-    # Find the peak and interpolate to get a more accurate peak
-    i = np.argmax(abs(f))  # Just use this for less-accurate, naive version
-    print(parabolic(np.log(abs(f)),i))
-    true_i = parabolic(np.log(abs(f)), i)[0]
+    # Center the data on zero
+    zdata = data[:,1] - v_avg
 
-    # Convert to equivalent frequency
-    return framerate * true_i / len(windowed)
+    # Count the zero crossings
+    zero_crossings = np.where(np.diff(np.sign(zdata)))[0]
+
+    # Linear interpolation
+    return framerate / np.mean(np.diff(zero_crossings)) / 2
+
+
+"""
+Calculates the period
+
+:param data:    The waveform
+:returns:       The period, in seconds
+"""
+def period(data):
+    return 1 / frequency(data)
 
 
 """
