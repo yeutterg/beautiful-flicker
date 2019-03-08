@@ -3,6 +3,7 @@ import csv
 import numpy as np
 
 from scipy.signal import savgol_filter, blackmanharris, argrelextrema
+from scipy.integrate import simps
 
 """
 Imports a waveform CSV showing the 
@@ -140,20 +141,39 @@ def period(data):
 Computes the percent flicker
 
 :param data:                The waveform
-:param vertical_offset:     The vertical offset, in volts
 :returns:                   The flicker percentage
 """
-def pct_flicker(data, vertical_offset=0.0):
+def pct_flicker(data):
     v_max = data[:,1].max()
     v_min = data[:,1].min()
     v_pp = v_max - v_min
-    v_tot = v_max - vertical_offset
-    return v_pp / v_tot * 100
+    return v_pp / v_max * 100
 
 
-def flicker_index():
+"""
+Gets the flicker index
+
+:param data:    The waveform
+:returns:       The flicker index
+"""
+def flicker_index(data):
     # Get one period of the data
+    one_period = get_periods(data)
 
+    # Get the average
+    v_max = data[:,1].max()
+    v_min = data[:,1].min()
+    v_avg = np.mean([v_max, v_min])
 
-    return None
+    # Split the curve across the average
+    curve_top = [i if i > v_avg else v_avg for i in one_period[:,1]]
 
+    # Subtract the average from the top curve
+    curve_top = curve_top - v_avg
+
+    # Get the area under the curve for the top and all using Simpson's rule
+    area_top = simps(curve_top)
+    area_all = simps(one_period[:,1])
+
+    # Return the flicker index 
+    return area_top / area_all
