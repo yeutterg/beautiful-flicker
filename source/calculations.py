@@ -13,7 +13,7 @@ def import_waveform_csv(filename:str, horizontal_units='us', horizontal_scale=20
                         vertical_scale_volts=0.20, vertical_offset=0.0,
                         sample_interval=0.0000000020000) -> np.array:
     
-    data = np.genfromtxt(filename, delimiter=',')[:,1]
+    data = np.genfromtxt(filename, delimiter=',')
     return data
     
 
@@ -25,17 +25,22 @@ Applies the Savitzky-Golay Filter to remove noise
 :returns:               The denoised data
 """
 def denoise(data, window_length=1001):
-    filtered = savgol_filter(data, window_length, 2)
-    return filtered
+    data2 = np.copy(data)
+    data2[:,1] = savgol_filter(data2[:,1], window_length, 2)
+    return data2
 
 
-def frequency(data, framerate=500000):
+def frequency(data):
+    # Get the frame rate
+    framerate = int(round(1/(data[1,0]-data[0,0])))
+
     # Compute Fourier transform of windowed signal
-    windowed = data * blackmanharris(len(data))
+    windowed = data[:,1] * blackmanharris(len(data[:,1]))
     f = np.fft.rfft(windowed)
 
     # Find the peak and interpolate to get a more accurate peak
     i = np.argmax(abs(f))  # Just use this for less-accurate, naive version
+    print(parabolic(np.log(abs(f)),i))
     true_i = parabolic(np.log(abs(f)), i)[0]
 
     # Convert to equivalent frequency
@@ -50,8 +55,8 @@ Computes the percent flicker
 :returns:                   The flicker percentage
 """
 def pct_flicker(data, vertical_offset=0.0):
-    v_max = data.max()
-    v_min = data.min()
+    v_max = data[:,1].max()
+    v_min = data[:,1].min()
     v_pp = v_max - v_min
     v_tot = v_max - vertical_offset
     return v_pp / v_tot * 100
@@ -85,22 +90,5 @@ def parabolic(f, x):
     """
     xv = 1/2. * (f[x-1] - f[x+1]) / (f[x-1] - 2 * f[x] + f[x+1]) + x
     yv = f[x] - 1/4. * (f[x-1] - f[x+1]) * (xv - x)
-    return (xv, yv)
-
-
-"""
-From https://gist.github.com/endolith/255291
-"""
-def parabolic_polyfit(f, x, n):
-    """Use the built-in polyfit() function to find the peak of a parabola
-    
-    f is a vector and x is an index for that vector.
-    
-    n is the number of samples of the curve used to fit the parabola.
-
-    """    
-    a, b, c = np.polyfit(np.arange(x-n//2, x+n//2+1), f[x-n//2:x+n//2+1], 2)
-    xv = -0.5 * b/a
-    yv = a * xv**2 + b * xv + c
     return (xv, yv)
     
