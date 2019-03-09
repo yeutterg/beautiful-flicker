@@ -1,3 +1,13 @@
+"""Flicker Plotting Functions
+
+These functions generate commonly-used flicker graphics.
+
+The functions are:
+
+    * ieee_par_1789_graph - Plots the IEEE PAR 1789 logarithmic graph
+    * waveform_graph - Plots the time-domain flicker waveform
+"""
+
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,23 +17,35 @@ from matplotlib.ticker import PercentFormatter, ScalarFormatter
 from sklearn.preprocessing import minmax_scale
 from pylab import text
 
-"""
-Plots the IEEE PAR 1789 graphic
 
-@param list data                            The data points as a list of tuples as [(freq, mod, 'Name')], where mod is <= 1
-@param tuple figsize [optional]             The (width,height) of the plotted figure
-@param string filename [optional]           If specified, will save plot as the specified filename
-@param bool showred [optional]              Whether to show the unsafe region in red
-@param bool showyellow [optional]           Whether to show the low-risk region in yellow
-@param bool noriskcolor [optional]          If False, no risk region will show in gray. If True, green
-@param int max_freq [optional]              The maximum frequency, in kHz
-@param float min_pct [optional]             The minimum percent to display
-@param bool supress [optional]              If True, the plot will not be shown
-"""
-def ieee_par_1789_graphic(
-        data, figsize=(8,4), filename=None, showred=True, showyellow=True, noriskcolor=True, max_freq=3000, min_pct=0.1, 
-        suppress=False
+def ieee_par_1789_graph(
+        data, figsize:tuple=(8,4), filename:str=None, showred:bool=True, showyellow:bool=True, 
+        noriskcolor:bool=True, max_freq:int=3000, min_pct:float=0.1, suppress:bool=False
     ):
+    """Plots the IEEE PAR 1789 logarithmic graph
+
+    Parameters
+    ----------
+    data : list
+        The data points as a list of tuples as [(freq, mod, 'Name')], where mod is <= 1
+    figsize : tuple
+        The (width,height) of the plotted figure
+    filename : str or None
+        If specified, will save plot as the specified filename, e.g.: filename='../out/this_graph.png'
+    showred : bool
+        Whether to show the unsafe region in red
+    showyellow : bool
+        Whether to show the low-risk region in yellow
+    noriskcolor : bool
+        If False, no risk region will show in gray. If True, will show in green
+    max_freq : int
+        The maximum frequency, in kHz
+    min_pct : float
+        The minimum percent to display
+    suppress : bool
+        If True, the plot will not be shown        
+    """
+
     # count minimum percent decimals and recompute 
     if min_pct is not 0:
         decimals = str(min_pct)[::-1].find('.')
@@ -46,7 +68,8 @@ def ieee_par_1789_graphic(
     ax.set_axisbelow(True)
 
     # plot no risk region
-    norisk_region = [[1, min_pct], [1, 0.001], [10, 0.001], [100, 0.01], [100, 0.03], [3000, 1], [max_freq, 1], [max_freq, min_pct], ]
+    norisk_region = [[1, min_pct], [1, 0.001], [10, 0.001], [100, 0.01], [100, 0.03], [3000, 1], \
+        [max_freq, 1], [max_freq, min_pct], ]
     fc_color = 'g'
     if not noriskcolor:
         fc_color = 'gray'
@@ -55,7 +78,8 @@ def ieee_par_1789_graphic(
 
     # plot low risk region
     if showyellow:
-        lowrisk_region = [[1, 0.001], [1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], [3000, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
+        lowrisk_region = [[1, 0.001], [1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], \
+            [3000, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
         lowrisk = plt.Polygon(lowrisk_region, fc='y', alpha=0.3)
         plt.gca().add_patch(lowrisk)
 
@@ -65,7 +89,7 @@ def ieee_par_1789_graphic(
         highrisk = plt.Polygon(highrisk_region, fc='r', alpha=0.2)
         plt.gca().add_patch(highrisk)
 
-    # Plot the data
+    # plot the data
     markers = itertools.cycle(('o', '^', 's', 'D', 'p', 'P'))
     for pt in data:
         plt.scatter(pt[0], pt[1], label=pt[2], marker=next(markers), alpha=1)
@@ -80,21 +104,34 @@ def ieee_par_1789_graphic(
         plt.show()
 
 
-"""
-Plots the time-domain flicker waveform
+def waveform_graph(waveform, figsize:tuple=(8,4), suppress:bool=False, filename:str=None, 
+                   showstats:bool=True, num_periods:int=None, fullheight:bool=False):
+    """Plots the time-domain flicker waveform
 
-:param data:
-:param figsize:
-:param suppress:
-:param filename:        If specified, will save the graphic named as such
-:param showstats:       Will display
-:param num_periods:     If not None, will shorten display to the number of periods
-:param fullheight:      If true, the xmin will be zero. Otherwise, it will auto-set from the waveform v_min
-"""
-def waveform_graph(waveform, figsize=(8,4), suppress=False, filename=None, showstats=True,
-                   num_periods=None, fullheight=False):
+    Parameters
+    ----------
+    waveform : Waveform
+        The waveform object
+    figsize : tuple
+        The (horizontal, vertical) figure size
+    suppress : bool
+        If True, will not run plt.show()
+    filename : str or None 
+        If specified, will save the file named as such, e.g.: filename='../out/this_graph.png'
+    showstats : bool
+        If True, will show the flicker frequency, percent, and index on the bottom left of the graph
+    num_periods : int or None
+        If not None, will truncate the graph to the specified number of periods. 
+        NOTE: Must be less than the number of periods present in the data
+    fullheight : bool
+        If True, will set the bottom y limit to zero. 
+        If False, will display the non-scaled waveform starting from v_min
+    """
+    
+    # Get the data from the waveform
     data = waveform.get_data()
 
+    # Create the figure
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     plt.ylabel('Light Output')
     plt.xlabel('Time (ms)')
@@ -129,7 +166,6 @@ def waveform_graph(waveform, figsize=(8,4), suppress=False, filename=None, shows
     # make the left and bottom axis look cleaner
     ax.spines['bottom'].set_smart_bounds(True)
     
-
     # plot
     ax.plot(x_data, y_data)
 
@@ -144,8 +180,4 @@ def waveform_graph(waveform, figsize=(8,4), suppress=False, filename=None, shows
     # show the plot
     if not suppress:
         plt.show()
-
-
-
-# ieee_par_1789_graphic(data=[(120, 1, 'Test'), (60, 0.6, 'Test2')], min_pct=0.1)
     
