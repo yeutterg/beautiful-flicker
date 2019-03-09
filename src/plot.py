@@ -97,7 +97,7 @@ def waveform_graph(waveform, figsize=(8,4), suppress=False, filename=None, shows
 
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     plt.ylabel('Light Output')
-    plt.xlabel('Time (Seconds)')
+    plt.xlabel('Time (ms)')
 
     # hide the top and right axes
     ax.spines['top'].set_color('none')
@@ -106,17 +106,32 @@ def waveform_graph(waveform, figsize=(8,4), suppress=False, filename=None, shows
     # get the number of periods to display
     if num_periods:
         data = waveform.get_n_periods(num_periods=num_periods)
-        
-    # scale y axis data points from 0 to 1
+
+    # scale the x axis to milliseconds
+    x_data = data[:,0] * 1000
+
+    # get minimum for y axis scaling
     y_min = waveform.get_v_min() / waveform.get_v_max()
-    y_data = minmax_scale(data[:,1], feature_range=(y_min,1))
 
     # display the waveform full height? (xmin=0)
     if fullheight:
-        plt.ylim((0, 1.01))
+        plt.ylim((0,1))
+        plt.yticks(np.linspace(0, 1, 6))
+
+        # scale y axis to 0.99 because of strange clipping at 1.0
+        y_data = minmax_scale(data[:,1], feature_range=(y_min,0.99)) 
+    else:
+        ax.spines['left'].set_smart_bounds(True)
+
+        # scale y axis to (0,1)
+        y_data = minmax_scale(data[:,1], feature_range=(y_min,0.99))
+
+    # make the left and bottom axis look cleaner
+    ax.spines['bottom'].set_smart_bounds(True)
+    
 
     # plot
-    ax.plot(data[:,0], y_data)
+    ax.plot(x_data, y_data)
 
     # show stats on the graph
     if showstats:
