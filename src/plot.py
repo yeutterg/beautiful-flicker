@@ -1,9 +1,11 @@
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors
 import itertools
-
 from matplotlib.ticker import PercentFormatter, ScalarFormatter
+from scipy.interpolate import interp1d
+from pylab import text
 
 """
 Plots the IEEE PAR 1789 graphic
@@ -78,15 +80,58 @@ def ieee_par_1789_graphic(
         plt.show()
 
 
-def frequency_graph(data: np.array, figsize=(8,4), suppress=False):
-    # Convert the dict to a list of tuples
-    # lists = data.items()
-    # x, y = zip(*lists)
+"""
+Plots the time-domain flicker waveform
+
+:param data:
+:param figsize:
+:param suppress:
+:param filename:        If specified, will save the graphic named as such
+:param showstats:       Will display
+:param num_periods:     If not None, will shorten display to the number of periods
+:param fullheight:      If true, the xmin will be zero. Otherwise, it will auto-set from the waveform v_min
+"""
+def waveform_graph(waveform, figsize=(8,4), suppress=False, filename=None, showstats=True,
+                   num_periods=None, fullheight=False):
+    data = waveform.get_data()
 
     fig, ax = plt.subplots(1, 1, figsize=figsize)
-    plt.ylabel('Volts')
-    plt.xlabel('Seconds')
-    ax.plot(data[:,0], data[:,1])
+    plt.ylabel('Light Output')
+    plt.xlabel('Time (Seconds)')
+
+    # hide the top and right axes
+    ax.spines['top'].set_color('none')
+    ax.spines['right'].set_color('none')
+
+    # get the number of periods to display
+    if num_periods:
+        data = waveform.get_n_periods(num_periods=num_periods)
+
+    # display the waveform full height? (xmin=0)
+    if fullheight:
+        plt.ylim(bottom=0, top=0.1+math.ceil(waveform.get_v_max()*100.0)/100.0)
+        heights = np.linspace(0, 1, len(data[:,1]))
+    else:
+        heights = np.linspace(data[0,1]/data[-1,1], 1, len(data[:,1]))
+
+    print(heights.size, data[:,1].size)
+
+    # generate y axis data points from 0 to 1
+    y_data = interp1d(heights, data[:,1])
+    y_data = y_data(heights)
+
+    print(y_data)
+
+    # plot
+    ax.plot(data[:,0], y_data)
+
+    # show stats on the graph
+    if showstats:
+        text(0.02, 0.1, waveform.get_summary(), ha='left', va='center', transform=ax.transAxes)
+
+    # save the figure if a filename was specified
+    if filename:
+        plt.savefig(filename, dpi=300)
 
     # show the plot
     if not suppress:
