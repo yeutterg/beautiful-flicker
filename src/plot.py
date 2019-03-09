@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors
 import itertools
 from matplotlib.ticker import PercentFormatter, ScalarFormatter
-from scipy.interpolate import interp1d
+from sklearn.preprocessing import minmax_scale
 from pylab import text
 
 """
@@ -106,21 +106,14 @@ def waveform_graph(waveform, figsize=(8,4), suppress=False, filename=None, shows
     # get the number of periods to display
     if num_periods:
         data = waveform.get_n_periods(num_periods=num_periods)
+        
+    # scale y axis data points from 0 to 1
+    y_min = waveform.get_v_min() / waveform.get_v_max()
+    y_data = minmax_scale(data[:,1], feature_range=(y_min,1))
 
     # display the waveform full height? (xmin=0)
     if fullheight:
-        plt.ylim(bottom=0, top=0.1+math.ceil(waveform.get_v_max()*100.0)/100.0)
-        heights = np.linspace(0, 1, len(data[:,1]))
-    else:
-        heights = np.linspace(data[0,1]/data[-1,1], 1, len(data[:,1]))
-
-    print(heights.size, data[:,1].size)
-
-    # generate y axis data points from 0 to 1
-    y_data = interp1d(heights, data[:,1])
-    y_data = y_data(heights)
-
-    print(y_data)
+        plt.ylim((0, 1.01))
 
     # plot
     ax.plot(data[:,0], y_data)
