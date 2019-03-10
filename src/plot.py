@@ -171,7 +171,7 @@ def waveform_graph(waveform, figsize:tuple=(8,4), suppress:bool=False, filename:
 
     # show stats on the graph
     if showstats:
-        text(0.02, 0.1, waveform.get_summary(), ha='left', va='center', transform=ax.transAxes)
+        text(0.02, 0.1, waveform.summary(), ha='left', va='center', transform=ax.transAxes)
 
     # save the figure if a filename was specified
     if filename:

@@ -31,7 +31,7 @@ from scipy.signal import savgol_filter, blackmanharris, argrelextrema
 from scipy.integrate import simps
 from .utils import round_output, bool_to_pass_fail
 from .plot import waveform_graph
-from .standards import *
+from .standards import well_building_standard_v2, california_ja8_2019
 
 
 class Waveform:
@@ -107,9 +107,9 @@ class Waveform:
         Gets the flicker index of this instance of the waveform
     plot(num_periods=None, filename=None, showstats=True, fullheight=False, figsize=(8,4))
         Plots the time-series waveform graphic
-    get_summary(verbose=False, format='String', rounded=True)
+    summary(verbose=False, format='String', rounded=True)
         Returns a summary of the parameters of this waveform instance
-    get_well_standard_v2():
+    get_well_standard_v2()
         Whether this waveform complies with the WELL v2 L7 flicker requirements
     get_california_ja8_2019()
         Whether this waveform complies with the California JA8 2019 flicker requirements
@@ -145,7 +145,7 @@ class Waveform:
         self.period = 1 / self.frequency
         self.one_period = n_periods(self.data, self.v_avg, self.period, num_periods=1)
         self.flicker_index = flicker_index(self.one_period, self.v_avg)
-        self.percent_flicker = percent_flicker(self.v_max, self.v_min)
+        self.percent_flicker = percent_flicker(self.v_max, self.v_pp)
         self.well_standard_v2 = well_building_standard_v2(self.frequency, self.percent_flicker)
         self.california_ja8_2019 = california_ja8_2019(self.frequency, self.percent_flicker)
 
@@ -438,7 +438,7 @@ class Waveform:
                        fullheight=fullheight, figsize=figsize)
 
 
-    def get_summary(self, verbose:bool=False, format:str='String', rounded:bool=True):
+    def summary(self, verbose:bool=False, format:str='String', rounded:bool=True):
         """Returns a summary of the parameters of this waveform instance
 
         Parameters
