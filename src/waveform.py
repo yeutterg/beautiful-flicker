@@ -29,8 +29,9 @@ The functions are:
 import numpy as np
 from scipy.signal import savgol_filter, blackmanharris, argrelextrema
 from scipy.integrate import simps
-from .utils import round_output
+from .utils import round_output, bool_to_pass_fail
 from .plot import waveform_graph
+from .standards import *
 
 
 class Waveform:
@@ -69,6 +70,10 @@ class Waveform:
         The flicker index of the waveform
     percent_flicker : float
         The percent flicker of the waveform
+    well_standard_v2 : bool
+        Whether this waveform complies with WELL v2 L7
+    california_ja8_2019 : bool
+        Whether this waveform complies with California JA8 2019
 
     Methods
     -------
@@ -104,6 +109,10 @@ class Waveform:
         Plots the time-series waveform graphic
     get_summary(verbose=False, format='String', rounded=True)
         Returns a summary of the parameters of this waveform instance
+    get_well_standard_v2():
+        Whether this waveform complies with the WELL v2 L7 flicker requirements
+    get_california_ja8_2019()
+        Whether this waveform complies with the California JA8 2019 flicker requirements
     """
 
     def __init__(self, filename:str, name:str, remove_noise:bool=True):
@@ -137,6 +146,8 @@ class Waveform:
         self.one_period = n_periods(self.data, self.v_avg, self.period, num_periods=1)
         self.flicker_index = flicker_index(self.one_period, self.v_avg)
         self.percent_flicker = percent_flicker(self.v_max, self.v_min)
+        self.well_standard_v2 = well_building_standard_v2(self.frequency, self.percent_flicker)
+        self.california_ja8_2019 = california_ja8_2019(self.frequency, self.percent_flicker)
 
 
     def get_name(self) -> str:
@@ -377,6 +388,30 @@ class Waveform:
         return round_output(self.flicker_index, rounded, digits)
 
 
+    def get_well_standard_v2(self) -> bool:
+        """Whether this waveform complies with the WELL v2 L7 flicker requirements
+
+        Returns
+        -------
+        bool
+            True if the waveform passes, False if not
+        """
+
+        return self.well_standard_v2
+
+
+    def get_california_ja8_2019(self) -> bool:
+        """Whether this waveform complies with the California JA8 2019 flicker requirements
+
+        Returns
+        -------
+        bool
+            True if the waveform passes, False if not
+        """
+
+        return self.california_ja8_2019
+
+
     def plot(self, num_periods:int=None, filename:str=None, showstats:bool=True, 
              fullheight:bool=False, figsize:tuple=(8,4)):
         """
@@ -412,7 +447,7 @@ class Waveform:
             If False, will display: 
                 Frequency, Percent Flicker, Flicker Index (and Name for dict format)
             If True, will display all of the above, plus:
-                Period, Frame Rate, V_min, V_max, V_avg, V_pp
+                Period, Frame Rate, V_min, V_max, V_avg, V_pp, WELL v2 L7, California JA 2019
         format : str
             The format of the output, either 'String' or 'Dict'
         rounded : bool
@@ -436,7 +471,9 @@ class Waveform:
                     "V_min: " + str(self.get_v_min(rounded)) + " V\n" + \
                     "V_max: " + str(self.get_v_max(rounded)) + " V\n" + \
                     "V_avg: " + str(self.get_v_avg(rounded)) + " V\n" + \
-                    "V_pp: " + str(self.get_v_pp(rounded)) + " V"
+                    "V_pp: " + str(self.get_v_pp(rounded)) + " V\n" + \
+                    "WELL v2 L7: " + bool_to_pass_fail(self.well_standard_v2) + "\n" + \
+                    "California JA8 2019: " + bool_to_pass_fail(self.california_ja8_2019)
 
         elif format == 'Dict':
             out = {}
@@ -452,6 +489,8 @@ class Waveform:
                 out['v_max'] = self.get_v_max(rounded)
                 out['v_avg'] = self.get_v_avg(rounded)
                 out['v_pp'] = self.get_v_pp(rounded)
+                out['WELL v2 L7'] = self.well_standard_v2
+                out['California JA8 2019'] = self.california_ja8_2019
 
         else:
             out = 'Unidentified data format'

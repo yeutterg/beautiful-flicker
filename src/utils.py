@@ -2,9 +2,10 @@
 
 Helper functions.
 
-Currently, the only function is:
+The functions are:
 
     * round_output - Function to round floats on return
+    * bool_to_pass_fail - Converts a boolean True to "Pass" and False to "Fail"
 """
 
 
@@ -31,7 +32,7 @@ def round_output(value:float, toround:bool=True, digits:int=2):
         If toround=True: The input value, rounded to an int or float
         If toround=False: The input value, not rounded
     """
-    
+
     if toround:
         if digits is not None or digits is not 0:
             return round(value, digits)
@@ -39,3 +40,23 @@ def round_output(value:float, toround:bool=True, digits:int=2):
             return int(round(value))
     else:
         return value
+
+
+def bool_to_pass_fail(value:bool) -> str:
+    """Converts a boolean True to "Pass" and False to "Fail"
+
+    Parameters
+    ----------
+    value : bool
+        A boolean value representing True for Pass and False for Fail
+
+    Returns
+    -------
+    str
+        "Pass" or "Fail"
+    """
+
+    if value:
+        return "Pass"
+    else:
+        return "Fail"
