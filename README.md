@@ -55,6 +55,7 @@ In addition to the heavily-documented [codebase](/src/), an HTML version of the 
 * IEEE [1789-2015](https://www.energy.gov/sites/prod/files/2015/05/f22/miller%2Blehman_flicker_lightfair2015.pdf) (PDF)
 * WELL Building Standard [L07 P2](https://v2.wellcertified.com/v/en/light/feature/7)
 * California 2019 [JA8](https://efiling.energy.ca.gov/GetDocument.aspx?tn=223245-9&DocumentContentId=27701) and [JA10](https://efiling.energy.ca.gov/GetDocument.aspx?tn=223245-11&DocumentContentId=27684) (PDFs)
+* [Photodiode Circuits](http://budgetlightforum.com/node/61254) (We use the OSRAM BPW34)
 
 ## License
 
