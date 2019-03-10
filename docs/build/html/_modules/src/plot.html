@@ -1,0 +1,283 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.plot &#8212; Beautiful Flicker 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.plot</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Flicker Plotting Functions</span>
+
+<span class="sd">These functions generate commonly-used flicker graphics.</span>
+
+<span class="sd">The functions are:</span>
+
+<span class="sd">    * ieee_par_1789_graph - Plots the IEEE PAR 1789 logarithmic graph</span>
+<span class="sd">    * waveform_graph - Plots the time-domain flicker waveform</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">matplotlib.colors</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">matplotlib.ticker</span> <span class="k">import</span> <span class="n">PercentFormatter</span><span class="p">,</span> <span class="n">ScalarFormatter</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="k">import</span> <span class="n">minmax_scale</span>
+<span class="kn">from</span> <span class="nn">pylab</span> <span class="k">import</span> <span class="n">text</span>
+
+
+<div class="viewcode-block" id="ieee_par_1789_graph"><a class="viewcode-back" href="../../index.html#src.plot.ieee_par_1789_graph">[docs]</a><span class="k">def</span> <span class="nf">ieee_par_1789_graph</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">figsize</span><span class="p">:</span><span class="nb">tuple</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">),</span> <span class="n">filename</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">showred</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">showyellow</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+        <span class="n">noriskcolor</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_freq</span><span class="p">:</span><span class="nb">int</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">min_pct</span><span class="p">:</span><span class="nb">float</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">suppress</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plots the IEEE PAR 1789 logarithmic graph</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : list</span>
+<span class="sd">        The data points as a list of tuples as [(freq, mod, &#39;Name&#39;)], where mod is &lt;= 1</span>
+<span class="sd">    figsize : tuple</span>
+<span class="sd">        The (width,height) of the plotted figure</span>
+<span class="sd">    filename : str or None</span>
+<span class="sd">        If specified, will save plot as the specified filename, e.g.: filename=&#39;../out/this_graph.png&#39;</span>
+<span class="sd">    showred : bool</span>
+<span class="sd">        Whether to show the unsafe region in red</span>
+<span class="sd">    showyellow : bool</span>
+<span class="sd">        Whether to show the low-risk region in yellow</span>
+<span class="sd">    noriskcolor : bool</span>
+<span class="sd">        If False, no risk region will show in gray. If True, will show in green</span>
+<span class="sd">    max_freq : int</span>
+<span class="sd">        The maximum frequency, in kHz</span>
+<span class="sd">    min_pct : float</span>
+<span class="sd">        The minimum percent to display</span>
+<span class="sd">    suppress : bool</span>
+<span class="sd">        If True, the plot will not be shown        </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># count minimum percent decimals and recompute </span>
+    <span class="k">if</span> <span class="n">min_pct</span> <span class="ow">is</span> <span class="ow">not</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">decimals</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">min_pct</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">min_pct</span> <span class="o">=</span> <span class="n">min_pct</span> <span class="o">/</span> <span class="mf">100.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">decimals</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">min_pct</span> <span class="o">=</span> <span class="mf">0.001</span>
+    
+    <span class="c1"># set up plot</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="n">tight_layout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="n">max_freq</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="n">min_pct</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Frequency (Hz)&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Modulation (%)&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">ScalarFormatter</span><span class="p">())</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">PercentFormatter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">decimals</span><span class="o">=</span><span class="n">decimals</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">which</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_axisbelow</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># plot no risk region</span>
+    <span class="n">norisk_region</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_pct</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">],</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">],</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">],</span> <span class="p">[</span><span class="mi">3000</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> \
+        <span class="p">[</span><span class="n">max_freq</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="n">max_freq</span><span class="p">,</span> <span class="n">min_pct</span><span class="p">],</span> <span class="p">]</span>
+    <span class="n">fc_color</span> <span class="o">=</span> <span class="s1">&#39;g&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">noriskcolor</span><span class="p">:</span>
+        <span class="n">fc_color</span> <span class="o">=</span> <span class="s1">&#39;gray&#39;</span>
+    <span class="n">norisk</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">norisk_region</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="n">fc_color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">norisk</span><span class="p">)</span>
+
+    <span class="c1"># plot low risk region</span>
+    <span class="k">if</span> <span class="n">showyellow</span><span class="p">:</span>
+        <span class="n">lowrisk_region</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">],</span> <span class="p">[</span><span class="mi">90</span><span class="p">,</span> <span class="mf">0.025</span><span class="p">],</span> <span class="p">[</span><span class="mi">90</span><span class="p">,</span> <span class="mf">0.075</span><span class="p">],</span> <span class="p">[</span><span class="mi">1200</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> \
+            <span class="p">[</span><span class="mi">3000</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">],</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mf">0.025</span><span class="p">],</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">]]</span>
+        <span class="n">lowrisk</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">lowrisk_region</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">lowrisk</span><span class="p">)</span>
+
+    <span class="c1"># plot high risk region</span>
+    <span class="k">if</span> <span class="n">showred</span><span class="p">:</span>
+        <span class="n">highrisk_region</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">],</span> <span class="p">[</span><span class="mi">90</span><span class="p">,</span> <span class="mf">0.025</span><span class="p">],</span> <span class="p">[</span><span class="mi">90</span><span class="p">,</span> <span class="mf">0.075</span><span class="p">],</span> <span class="p">[</span><span class="mi">1200</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+        <span class="n">highrisk</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">highrisk_region</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">highrisk</span><span class="p">)</span>
+
+    <span class="c1"># plot the data</span>
+    <span class="n">markers</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">cycle</span><span class="p">((</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;^&#39;</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">pt</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="n">markers</span><span class="p">),</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+    <span class="c1"># save the figure if a filename was specified</span>
+    <span class="k">if</span> <span class="n">filename</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+
+    <span class="c1"># show the plot</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">suppress</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="waveform_graph"><a class="viewcode-back" href="../../index.html#src.plot.waveform_graph">[docs]</a><span class="k">def</span> <span class="nf">waveform_graph</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="n">figsize</span><span class="p">:</span><span class="nb">tuple</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">),</span> <span class="n">suppress</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                   <span class="n">showstats</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_periods</span><span class="p">:</span><span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fullheight</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plots the time-domain flicker waveform</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    waveform : Waveform</span>
+<span class="sd">        The waveform object</span>
+<span class="sd">    figsize : tuple</span>
+<span class="sd">        The (horizontal, vertical) figure size</span>
+<span class="sd">    suppress : bool</span>
+<span class="sd">        If True, will not run plt.show()</span>
+<span class="sd">    filename : str or None </span>
+<span class="sd">        If specified, will save the file named as such, e.g.: filename=&#39;../out/this_graph.png&#39;</span>
+<span class="sd">    showstats : bool</span>
+<span class="sd">        If True, will show the flicker frequency, percent, and index on the bottom left of the graph</span>
+<span class="sd">    num_periods : int or None</span>
+<span class="sd">        If not None, will truncate the graph to the specified number of periods. </span>
+<span class="sd">        NOTE: Must be less than the number of periods present in the data</span>
+<span class="sd">    fullheight : bool</span>
+<span class="sd">        If True, will set the bottom y limit to zero. </span>
+<span class="sd">        If False, will display the non-scaled waveform starting from v_min</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1"># Get the data from the waveform</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">waveform</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+
+    <span class="c1"># Create the figure</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Light Output&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
+
+    <span class="c1"># hide the top and right axes</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s1">&#39;top&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s1">&#39;right&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+
+    <span class="c1"># get the number of periods to display</span>
+    <span class="k">if</span> <span class="n">num_periods</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">waveform</span><span class="o">.</span><span class="n">get_n_periods</span><span class="p">(</span><span class="n">num_periods</span><span class="o">=</span><span class="n">num_periods</span><span class="p">)</span>
+
+    <span class="c1"># scale the x axis to milliseconds</span>
+    <span class="n">x_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">1000</span>
+
+    <span class="c1"># get minimum for y axis scaling</span>
+    <span class="n">y_min</span> <span class="o">=</span> <span class="n">waveform</span><span class="o">.</span><span class="n">get_v_min</span><span class="p">()</span> <span class="o">/</span> <span class="n">waveform</span><span class="o">.</span><span class="n">get_v_max</span><span class="p">()</span>
+
+    <span class="c1"># display the waveform full height? (xmin=0)</span>
+    <span class="k">if</span> <span class="n">fullheight</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+        <span class="c1"># scale y axis to 0.99 because of strange clipping at 1.0</span>
+        <span class="n">y_data</span> <span class="o">=</span> <span class="n">minmax_scale</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">feature_range</span><span class="o">=</span><span class="p">(</span><span class="n">y_min</span><span class="p">,</span><span class="mf">0.99</span><span class="p">))</span> 
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s1">&#39;left&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_smart_bounds</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># scale y axis to (0,1)</span>
+        <span class="n">y_data</span> <span class="o">=</span> <span class="n">minmax_scale</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">feature_range</span><span class="o">=</span><span class="p">(</span><span class="n">y_min</span><span class="p">,</span><span class="mf">0.99</span><span class="p">))</span>
+
+    <span class="c1"># make the left and bottom axis look cleaner</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s1">&#39;bottom&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_smart_bounds</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    
+    <span class="c1"># plot</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">)</span>
+
+    <span class="c1"># show stats on the graph</span>
+    <span class="k">if</span> <span class="n">showstats</span><span class="p">:</span>
+        <span class="n">text</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">waveform</span><span class="o">.</span><span class="n">get_summary</span><span class="p">(),</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">transAxes</span><span class="p">)</span>
+
+    <span class="c1"># save the figure if a filename was specified</span>
+    <span class="k">if</span> <span class="n">filename</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+
+    <span class="c1"># show the plot</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">suppress</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+    
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Beautiful Flicker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Greg Yeutter.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

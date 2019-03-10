@@ -1,0 +1,708 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Beautiful Flicker: Documentation &#8212; Beautiful Flicker 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="beautiful-flicker-documentation">
+<h1>Beautiful Flicker: Documentation<a class="headerlink" href="#beautiful-flicker-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+<div class="section" id="module-src.waveform">
+<span id="waveform"></span><h1>Waveform<a class="headerlink" href="#module-src.waveform" title="Permalink to this headline">¶</a></h1>
+<p>Handles Flicker Waveform Data</p>
+<p>The class and methods contained herein allow you to generate flicker waveforms and 
+perform relevant calculations, including flicker index, frequency, and percent. 
+Plots can also be generated directly from the waveform.</p>
+<p>It is recommended to simply create instances of the Waveform class, as opposed to 
+using methods outside the class, as this will automatically perform all necessary
+calculations on initialization. In addition, class methods are easily callable
+(e.g. Waveform.plot(), Waveform.get_frequency())</p>
+<p>The class is:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Waveform - A class used to represent a flicker waveform</li>
+</ul>
+</div></blockquote>
+<p>The functions are:</p>
+<blockquote>
+<div><ul class="simple">
+<li>import_waveform_csv - Imports a waveform from a CSV file, typically produced by an oscilloscope</li>
+<li>denoise - Applies the Savitzky-Golay Filter to remove noise</li>
+<li>framerate - Gets the frame rate (samples per second) of the data</li>
+<li>find_nearest_idx - Finds the index of the nearest value in an array</li>
+<li>find_nearest_idx_rising - Finds the closest rising-edge value in a 1D array</li>
+<li>frequency - Calculates the dominant frequency of the waveform</li>
+<li>percent_flicker - Computes the flicker percentage of the waveform</li>
+<li>flicker_index - Gets the flicker index of the waveform</li>
+<li>n_periods - Truncates a waveform to n periods</li>
+</ul>
+</div></blockquote>
+<dl class="class">
+<dt id="src.waveform.Waveform">
+<em class="property">class </em><code class="descclassname">src.waveform.</code><code class="descname">Waveform</code><span class="sig-paren">(</span><em>filename: str</em>, <em>name: str</em>, <em>remove_noise: bool = True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/waveform.html#Waveform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class used to represent a flicker waveform</p>
+<p>This class should be used in lieu of the other functions in this file, as all 
+necessary computations are completed in initialization (waveform import from CSV)
+and class methods are easily callable (e.g. Waveform.plot(), Waveform.get_frequency())</p>
+<dl class="docutils">
+<dt>name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>The name of the waveform. Use this to keep track of multiple waveforms and for plotting</dd>
+<dt>data <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd>The 2D array holding waveform data. Format is [time(seconds):float, voltage:float]</dd>
+<dt>denoised <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>Whether or not the waveform has been filtered to remove noise</dd>
+<dt>framerate <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of samples per second of the waveform</dd>
+<dt>v_max <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The maximum voltage</dd>
+<dt>v_min <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The minimum voltage</dd>
+<dt>v_avg <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The average voltage (mean of v_max and v_min)</dd>
+<dt>v_pp <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The peak-to-peak voltage (v_max - v_min)</dd>
+<dt>frequency <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The dominant flicker frequency, in Hertz</dd>
+<dt>period <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The period (1 / frequency), in seconds</dd>
+<dt>one_period <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd>A 2D array containing just one period of the waveform. 
+Format is [time(seconds):float, voltage:float]</dd>
+<dt>flicker_index <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The flicker index of the waveform</dd>
+<dt>percent_flicker <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The percent flicker of the waveform</dd>
+</dl>
+<dl class="docutils">
+<dt>get_name()</dt>
+<dd>Gets the name of this waveform instance</dd>
+<dt>get_data()</dt>
+<dd>Gets the 2D array containing waveform data</dd>
+<dt>get_framerate()</dt>
+<dd>Gets the framerate (samples per second) of the data</dd>
+<dt>get_denoised()</dt>
+<dd>Whether this waveform has been filtered for noise</dd>
+<dt>get_v_max(rounded=True, digits=2)</dt>
+<dd>Gets the maximum voltage of this waveform instance</dd>
+<dt>get_v_min(rounded=True, digits=2)</dt>
+<dd>Gets the minimum voltage of this waveform instance</dd>
+<dt>get_v_pp(rounded=True, digits=2)</dt>
+<dd>Gets the peak-to-peak voltage of this waveform instance</dd>
+<dt>get_v_avg(rounded=True, digits=2)</dt>
+<dd>Gets the average voltage of this waveform instance</dd>
+<dt>get_frequency(rounded=True, digits=1)</dt>
+<dd>Gets the flicker frequency of this waveform instance</dd>
+<dt>get_period()</dt>
+<dd>Gets the period of one oscillation of this waveform instance</dd>
+<dt>get_one_period()</dt>
+<dd>Gets the 2D array containing one period of the waveform data</dd>
+<dt>get_n_periods(num_periods=1)</dt>
+<dd>Gets the 2D array containing the specified number of periods in the waveform data</dd>
+<dt>get_percent_flicker(rounded=True, digits=1)</dt>
+<dd>Gets the percent flicker of this instance of the waveform</dd>
+<dt>get_flicker_index(rounded=True, digits=1)</dt>
+<dd>Gets the flicker index of this instance of the waveform</dd>
+<dt>plot(num_periods=None, filename=None, showstats=True, fullheight=False, figsize=(8,4))</dt>
+<dd>Plots the time-series waveform graphic</dd>
+<dt>get_summary(verbose=False, format=’String’, rounded=True)</dt>
+<dd>Returns a summary of the parameters of this waveform instance</dd>
+</dl>
+<dl class="method">
+<dt id="src.waveform.Waveform.get_data">
+<code class="descname">get_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the 2D array containing waveform data</p>
+<dl class="docutils">
+<dt>ndarray</dt>
+<dd>The 2D array holding waveform data. Format is [time(seconds):float, voltage:float]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_denoised">
+<code class="descname">get_denoised</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_denoised"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_denoised" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether this waveform has been filtered for noise</p>
+<dl class="docutils">
+<dt>bool</dt>
+<dd>True if the waveform has been denoised, False if not</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_flicker_index">
+<code class="descname">get_flicker_index</code><span class="sig-paren">(</span><em>rounded: bool = True</em>, <em>digits: int = 1</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_flicker_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_flicker_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the flicker index of this instance of the waveform</p>
+<dl class="docutils">
+<dt>rounded <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True (default), will round the output
+If False, will not round the output</dd>
+<dt>digits <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of decimal points to round to</dd>
+</dl>
+<dl class="docutils">
+<dt>float</dt>
+<dd>The flicker index</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_framerate">
+<code class="descname">get_framerate</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; int<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_framerate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_framerate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the framerate (samples per second) of the data</p>
+<dl class="docutils">
+<dt>int</dt>
+<dd>The number of samples per second of the waveform</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_frequency">
+<code class="descname">get_frequency</code><span class="sig-paren">(</span><em>rounded: bool = True</em>, <em>digits: int = 1</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_frequency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_frequency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the flicker frequency of this waveform instance</p>
+<dl class="docutils">
+<dt>rounded <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True (default), will round the output
+If False, will not round the output</dd>
+<dt>digits <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of decimal points to round to</dd>
+</dl>
+<dl class="docutils">
+<dt>float</dt>
+<dd>The flicker frequency in Hertz</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_n_periods">
+<code class="descname">get_n_periods</code><span class="sig-paren">(</span><em>num_periods: int = 1</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_n_periods"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_n_periods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the 2D array containing the specified number of periods in the waveform data</p>
+<dl class="docutils">
+<dt>num_periods <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of periods to return.
+NOTE: Must be fewer than the number of periods in the input data</dd>
+</dl>
+<dl class="docutils">
+<dt>ndarray</dt>
+<dd>The 2D array holding the specified number of periods of the waveform data. 
+Format is [time(seconds):float, voltage:float]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_name">
+<code class="descname">get_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the name of this waveform instance</p>
+<dl class="docutils">
+<dt>str</dt>
+<dd>The name of this waveform instance</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_one_period">
+<code class="descname">get_one_period</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_one_period"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_one_period" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the 2D array containing one period of the waveform data</p>
+<dl class="docutils">
+<dt>ndarray</dt>
+<dd>The 2D array holding one period of the waveform. 
+Format is [time(seconds):float, voltage:float]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_percent_flicker">
+<code class="descname">get_percent_flicker</code><span class="sig-paren">(</span><em>rounded: bool = True</em>, <em>digits: int = 1</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_percent_flicker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_percent_flicker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the percent flicker of this instance of the waveform</p>
+<dl class="docutils">
+<dt>rounded <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True (default), will round the output
+If False, will not round the output</dd>
+<dt>digits <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of decimal points to round to</dd>
+</dl>
+<dl class="docutils">
+<dt>float</dt>
+<dd>The percent flicker (will be in the format XX.XXXX, NOT 0.XXXXXX)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_period">
+<code class="descname">get_period</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_period"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_period" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the period of one oscillation of this waveform instance</p>
+<dl class="docutils">
+<dt>float</dt>
+<dd>The period in seconds</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_summary">
+<code class="descname">get_summary</code><span class="sig-paren">(</span><em>verbose: bool = False</em>, <em>format: str = 'String'</em>, <em>rounded: bool = True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/waveform.html#Waveform.get_summary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a summary of the parameters of this waveform instance</p>
+<dl class="docutils">
+<dt>verbose <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><dl class="first last docutils">
+<dt>If False, will display: </dt>
+<dd>Frequency, Percent Flicker, Flicker Index (and Name for dict format)</dd>
+<dt>If True, will display all of the above, plus:</dt>
+<dd>Period, Frame Rate, V_min, V_max, V_avg, V_pp</dd>
+</dl>
+</dd>
+<dt>format <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>The format of the output, either ‘String’ or ‘Dict’</dd>
+<dt>rounded <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True (default), will round the output values
+If False, will not round the output values</dd>
+</dl>
+<p>Returns:
+str or dict</p>
+<blockquote>
+<div>If format = ‘String’: A String summarizing the waveform
+If format = ‘Dict’: A dict summarizing the waveform</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_v_avg">
+<code class="descname">get_v_avg</code><span class="sig-paren">(</span><em>rounded: bool = True</em>, <em>digits: int = 2</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_v_avg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_v_avg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the average voltage of this waveform instance</p>
+<p>Average voltage is the mean of v_max and v_min</p>
+<dl class="docutils">
+<dt>rounded <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True (default), will round the output
+If False, will not round the output</dd>
+<dt>digits <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of decimal points to round to</dd>
+</dl>
+<dl class="docutils">
+<dt>float</dt>
+<dd>The average voltage</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_v_max">
+<code class="descname">get_v_max</code><span class="sig-paren">(</span><em>rounded: bool = True</em>, <em>digits: int = 2</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_v_max"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_v_max" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the maximum voltage of this waveform instance</p>
+<dl class="docutils">
+<dt>rounded <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True (default), will round the output
+If False, will not round the output</dd>
+<dt>digits <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of decimal points to round to</dd>
+</dl>
+<dl class="docutils">
+<dt>float</dt>
+<dd>The max voltage</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_v_min">
+<code class="descname">get_v_min</code><span class="sig-paren">(</span><em>rounded: bool = True</em>, <em>digits: int = 2</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_v_min"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_v_min" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the minimum voltage of this waveform instance</p>
+<dl class="docutils">
+<dt>rounded <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True (default), will round the output
+If False, will not round the output</dd>
+<dt>digits <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of decimal points to round to</dd>
+</dl>
+<dl class="docutils">
+<dt>float</dt>
+<dd>The min voltage</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.get_v_pp">
+<code class="descname">get_v_pp</code><span class="sig-paren">(</span><em>rounded: bool = True</em>, <em>digits: int = 2</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/src/waveform.html#Waveform.get_v_pp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.get_v_pp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the peak-to-peak voltage of this waveform instance</p>
+<p>Peak-to-peak voltage is v_max - v-min</p>
+<dl class="docutils">
+<dt>rounded <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True (default), will round the output
+If False, will not round the output</dd>
+<dt>digits <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of decimal points to round to</dd>
+</dl>
+<dl class="docutils">
+<dt>float</dt>
+<dd>The peak-to-peak voltage</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.waveform.Waveform.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><em>num_periods: int = None</em>, <em>filename: str = None</em>, <em>showstats: bool = True</em>, <em>fullheight: bool = False</em>, <em>figsize: tuple = (8</em>, <em>4)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/waveform.html#Waveform.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.Waveform.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the time-series waveform graphic</p>
+<dl class="docutils">
+<dt>num_periods <span class="classifier-delimiter">:</span> <span class="classifier">int or None</span></dt>
+<dd>The number of periods to plot. If None, will show the whole waveform</dd>
+<dt>filename <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>If specified, will save the file in the specified location.
+e.g.: filename=’../out/this_graph.png’
+If None, the plot will not be saved</dd>
+<dt>showstats <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True, will show the flicker frequency, percent, and index on the plot</dd>
+<dt>fullheight <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True, will set the Y axis limits from 0 to 1.
+If False, will set the limits from v_min to 1</dd>
+<dt>figsize <span class="classifier-delimiter">:</span> <span class="classifier">tuple</span></dt>
+<dd>The (x,y) size of the figure</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="src.waveform.denoise">
+<code class="descclassname">src.waveform.</code><code class="descname">denoise</code><span class="sig-paren">(</span><em>data: numpy.ndarray</em>, <em>window_length: int = 1001</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="_modules/src/waveform.html#denoise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.denoise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies the Savitzky-Golay Filter to remove noise</p>
+<dl class="docutils">
+<dt>data <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd>The waveform data as a 2D array</dd>
+<dt>window_length <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The window length for the filter. Higher equals more smoothing</dd>
+</dl>
+<dl class="docutils">
+<dt>ndarray</dt>
+<dd>The waveform with noise removed</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.waveform.find_nearest_idx">
+<code class="descclassname">src.waveform.</code><code class="descname">find_nearest_idx</code><span class="sig-paren">(</span><em>array: numpy.ndarray</em>, <em>value: float</em><span class="sig-paren">)</span> &#x2192; int<a class="reference internal" href="_modules/src/waveform.html#find_nearest_idx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.find_nearest_idx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the index of the nearest value in an array</p>
+<dl class="docutils">
+<dt>array <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd>A 1D array to search</dd>
+<dt>value <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The closest value to search for in the array</dd>
+</dl>
+<dl class="docutils">
+<dt>int</dt>
+<dd>The first index of the array value that is closest to the search value</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.waveform.find_nearest_idx_rising">
+<code class="descclassname">src.waveform.</code><code class="descname">find_nearest_idx_rising</code><span class="sig-paren">(</span><em>array: numpy.ndarray</em>, <em>value: float</em><span class="sig-paren">)</span> &#x2192; int<a class="reference internal" href="_modules/src/waveform.html#find_nearest_idx_rising"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.find_nearest_idx_rising" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the closest rising-edge value in a 1D array</p>
+<p>This function is primarily used to find the start of a period.
+It recursively calls find_nearest_index()</p>
+<dl class="docutils">
+<dt>array <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd>A 1D array to search</dd>
+<dt>value <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The closest value to search for in the array</dd>
+</dl>
+<dl class="docutils">
+<dt>int</dt>
+<dd>The first index of the array value that is both closest to the search value and on a rising edge</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.waveform.flicker_index">
+<code class="descclassname">src.waveform.</code><code class="descname">flicker_index</code><span class="sig-paren">(</span><em>one_period: numpy.ndarray</em>, <em>v_avg: float</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/src/waveform.html#flicker_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.flicker_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the flicker index of the waveform</p>
+<dl class="docutils">
+<dt>one_period <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd>One period of the waveform as a 2D array</dd>
+<dt>v_avg <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The average voltage</dd>
+</dl>
+<dl class="docutils">
+<dt>float</dt>
+<dd>The flicker index</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.waveform.framerate">
+<code class="descclassname">src.waveform.</code><code class="descname">framerate</code><span class="sig-paren">(</span><em>data: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; int<a class="reference internal" href="_modules/src/waveform.html#framerate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.framerate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the frame rate (samples per second) of the data</p>
+<dl class="docutils">
+<dt>data <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd>The waveform data as a 2D array</dd>
+</dl>
+<dl class="docutils">
+<dt>int</dt>
+<dd>The number of samples per second in the data</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.waveform.frequency">
+<code class="descclassname">src.waveform.</code><code class="descname">frequency</code><span class="sig-paren">(</span><em>data: numpy.ndarray</em>, <em>framerate: int</em>, <em>v_avg: float</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/src/waveform.html#frequency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.frequency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the dominant frequency of the waveform</p>
+<p>Uses the zero-crossing method for fast and accurate frequency calculation</p>
+<dl class="docutils">
+<dt>data <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd>The waveform data as a 2D array</dd>
+<dt>framerate <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The frame rate (samples per second)</dd>
+<dt>v_avg <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The average voltage</dd>
+</dl>
+<dl class="docutils">
+<dt>float</dt>
+<dd>The frequency in Hertz</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.waveform.import_waveform_csv">
+<code class="descclassname">src.waveform.</code><code class="descname">import_waveform_csv</code><span class="sig-paren">(</span><em>filename: str</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="_modules/src/waveform.html#import_waveform_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.import_waveform_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Imports a waveform from a CSV file, typically produced by an oscilloscope</p>
+<p>NOTE: Format should be [time(seconds), volts] and header info should be removed</p>
+<dl class="docutils">
+<dt>filename <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>The name of the CSV file</dd>
+</dl>
+<dl class="docutils">
+<dt>ndarray</dt>
+<dd>A 2D numpy array in the format [time(seconds), volts]</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.waveform.n_periods">
+<code class="descclassname">src.waveform.</code><code class="descname">n_periods</code><span class="sig-paren">(</span><em>data: numpy.ndarray</em>, <em>v_avg: float</em>, <em>period: float</em>, <em>num_periods: int = 1</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="_modules/src/waveform.html#n_periods"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.n_periods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Truncates a waveform to n periods</p>
+<p>NOTE: The number of periods must be shorter than the input waveform</p>
+<dl class="docutils">
+<dt>data <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd>The waveform data as a 2D array</dd>
+<dt>v_avg <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The average voltage</dd>
+<dt>period <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The period in seconds</dd>
+<dt>num_periods <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of periods to return</dd>
+</dl>
+<dl class="docutils">
+<dt>ndarray</dt>
+<dd>The waveform truncated to the specified number of periods</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.waveform.percent_flicker">
+<code class="descclassname">src.waveform.</code><code class="descname">percent_flicker</code><span class="sig-paren">(</span><em>v_max: float</em>, <em>v_pp: float</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/src/waveform.html#percent_flicker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.waveform.percent_flicker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the flicker percentage of the waveform</p>
+<dl class="docutils">
+<dt>v_max <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The max voltage</dd>
+<dt>v_pp <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The peak-to-peak voltage</dd>
+</dl>
+<dl class="docutils">
+<dt>float</dt>
+<dd>The flicker percentage</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-src.plot">
+<span id="plot"></span><h1>Plot<a class="headerlink" href="#module-src.plot" title="Permalink to this headline">¶</a></h1>
+<p>Flicker Plotting Functions</p>
+<p>These functions generate commonly-used flicker graphics.</p>
+<p>The functions are:</p>
+<blockquote>
+<div><ul class="simple">
+<li>ieee_par_1789_graph - Plots the IEEE PAR 1789 logarithmic graph</li>
+<li>waveform_graph - Plots the time-domain flicker waveform</li>
+</ul>
+</div></blockquote>
+<dl class="function">
+<dt id="src.plot.ieee_par_1789_graph">
+<code class="descclassname">src.plot.</code><code class="descname">ieee_par_1789_graph</code><span class="sig-paren">(</span><em>data</em>, <em>figsize: tuple = (8</em>, <em>4)</em>, <em>filename: str = None</em>, <em>showred: bool = True</em>, <em>showyellow: bool = True</em>, <em>noriskcolor: bool = True</em>, <em>max_freq: int = 3000</em>, <em>min_pct: float = 0.1</em>, <em>suppress: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/plot.html#ieee_par_1789_graph"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.plot.ieee_par_1789_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the IEEE PAR 1789 logarithmic graph</p>
+<dl class="docutils">
+<dt>data <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>The data points as a list of tuples as [(freq, mod, ‘Name’)], where mod is &lt;= 1</dd>
+<dt>figsize <span class="classifier-delimiter">:</span> <span class="classifier">tuple</span></dt>
+<dd>The (width,height) of the plotted figure</dd>
+<dt>filename <span class="classifier-delimiter">:</span> <span class="classifier">str or None</span></dt>
+<dd>If specified, will save plot as the specified filename, e.g.: filename=’../out/this_graph.png’</dd>
+<dt>showred <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>Whether to show the unsafe region in red</dd>
+<dt>showyellow <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>Whether to show the low-risk region in yellow</dd>
+<dt>noriskcolor <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If False, no risk region will show in gray. If True, will show in green</dd>
+<dt>max_freq <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The maximum frequency, in kHz</dd>
+<dt>min_pct <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The minimum percent to display</dd>
+<dt>suppress <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True, the plot will not be shown</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.plot.waveform_graph">
+<code class="descclassname">src.plot.</code><code class="descname">waveform_graph</code><span class="sig-paren">(</span><em>waveform</em>, <em>figsize: tuple = (8</em>, <em>4)</em>, <em>suppress: bool = False</em>, <em>filename: str = None</em>, <em>showstats: bool = True</em>, <em>num_periods: int = None</em>, <em>fullheight: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/plot.html#waveform_graph"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.plot.waveform_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the time-domain flicker waveform</p>
+<dl class="docutils">
+<dt>waveform <span class="classifier-delimiter">:</span> <span class="classifier">Waveform</span></dt>
+<dd>The waveform object</dd>
+<dt>figsize <span class="classifier-delimiter">:</span> <span class="classifier">tuple</span></dt>
+<dd>The (horizontal, vertical) figure size</dd>
+<dt>suppress <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True, will not run plt.show()</dd>
+<dt>filename <span class="classifier-delimiter">:</span> <span class="classifier">str or None </span></dt>
+<dd>If specified, will save the file named as such, e.g.: filename=’../out/this_graph.png’</dd>
+<dt>showstats <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True, will show the flicker frequency, percent, and index on the bottom left of the graph</dd>
+<dt>num_periods <span class="classifier-delimiter">:</span> <span class="classifier">int or None</span></dt>
+<dd>If not None, will truncate the graph to the specified number of periods. 
+NOTE: Must be less than the number of periods present in the data</dd>
+<dt>fullheight <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>If True, will set the bottom y limit to zero. 
+If False, will display the non-scaled waveform starting from v_min</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-src.utils">
+<span id="utils"></span><h1>Utils<a class="headerlink" href="#module-src.utils" title="Permalink to this headline">¶</a></h1>
+<p>Miscellaneous Utilities</p>
+<p>Helper functions.</p>
+<p>Currently, the only function is:</p>
+<blockquote>
+<div><ul class="simple">
+<li>round_output - Function to round floats on return</li>
+</ul>
+</div></blockquote>
+<dl class="function">
+<dt id="src.utils.round_output">
+<code class="descclassname">src.utils.</code><code class="descname">round_output</code><span class="sig-paren">(</span><em>value: float</em>, <em>toround: bool = True</em>, <em>digits: int = 2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utils.html#round_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utils.round_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to round floats on return</p>
+<p>Wrap return values with this function to easily round output.
+e.g. To round to one decimal place: 
+return round_output(return_value, toround=True, digits=1)</p>
+<dl class="docutils">
+<dt>value <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>The value to round</dd>
+<dt>toround <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd>Whether or not to round</dd>
+<dt>digits <span class="classifier-delimiter">:</span> <span class="classifier">int or None</span></dt>
+<dd>The number of digits to round to. 
+To round to a whole number (int), set digits to None or 0</dd>
+</dl>
+<dl class="docutils">
+<dt>float or int</dt>
+<dd>If toround=True: The input value, rounded to an int or float
+If toround=False: The input value, not rounded</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">Beautiful Flicker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Greg Yeutter.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
