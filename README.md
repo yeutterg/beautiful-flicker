@@ -6,7 +6,7 @@ For example, it can plot a flicker waveform and display automatically-computed f
 
 ![Flicker Waveform](/out/fullheight.png)
 
-It can plot the flicker frequency and percentage on an [IEEE PAR 1789-2015][1789-2015] flicker graphic:
+It can plot the flicker frequency and percentage on an IEEE PAR 1789-2015 flicker graphic:
 
 ![IEEE 1789 Flicker Graphic](/out/Low%20Blue%20Flicker%20Comparison.png)
 
@@ -14,7 +14,7 @@ It can plot the flicker frequency and percentage on an [IEEE PAR 1789-2015][1789
 
 **See also:** [Beautiful Photometry](https://github.com/yeutterg/beautiful-photometry)
 
-## [Install]
+## Install
 
 Make sure you have Python installed in your environment. This only works with Python 3+.
 
@@ -32,7 +32,7 @@ Examples of how to use this project can be found in the [examples](/examples/) f
 
 To run and modify the Jupyter Notebooks, or to create a new one: 
 
-1. Follow the [installation instructions](#install)
+1. Follow the installation instructions
 
 2. Run from the root of this project:
 
@@ -42,7 +42,11 @@ To run and modify the Jupyter Notebooks, or to create a new one:
 
 ### Documentation
 
-In addition to the heavily-documented [codebase](/src/), an [HTML version](/docs/build/html/index.html) of the documentation is available. 
+In addition to the heavily-documented [codebase](/src/), an HTML version of the documentation is available. Access it by cloning the repository and opening this location in your browser:
+
+```
+/docs/build/html/index.html 
+```
 
 ## Selected Flicker Resources
 
