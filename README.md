@@ -1,6 +1,6 @@
 # Beautiful Flicker
 
-A set of tools to compute and display lighting flicker data.
+A set of Python tools to compute and display lighting flicker data.
 
 For example, it can plot a flicker waveform and display automatically-computed flicker metrics:
 
@@ -9,6 +9,8 @@ For example, it can plot a flicker waveform and display automatically-computed f
 It can plot the flicker frequency and percentage on an IEEE PAR 1789-2015 flicker graphic:
 
 ![IEEE 1789 Flicker Graphic](/out/Low%20Blue%20Flicker%20Comparison.png)
+
+This tool can be scripted for use in automated test scenarios. For custom versions of this software and testing services, please [get in touch](mailto:gregyeutter@gmail.com?subject=Beautiful%20Flicker%20Inquiry).
 
 **Disclaimer:** This tool is an early alpha version! Things may not work, and breaking changes may occur between versions. Please open a new issue or submit a pull request if you encounter any problems. Please open a new issue for feature requests.
 
@@ -52,7 +54,7 @@ In addition to the heavily-documented [codebase](/src/), an HTML version of the 
 
 * IEEE [1789-2015](https://www.energy.gov/sites/prod/files/2015/05/f22/miller%2Blehman_flicker_lightfair2015.pdf) (PDF)
 * WELL Building Standard [L07 P2](https://v2.wellcertified.com/v/en/light/feature/7)
-* California 2019 [JA8]() and [JA10](https://efiling.energy.ca.gov/GetDocument.aspx?tn=223245-11&DocumentContentId=27684) (PDFs)
+* California 2019 [JA8](https://efiling.energy.ca.gov/GetDocument.aspx?tn=223245-9&DocumentContentId=27701) and [JA10](https://efiling.energy.ca.gov/GetDocument.aspx?tn=223245-11&DocumentContentId=27684) (PDFs)
 
 ## License
 
