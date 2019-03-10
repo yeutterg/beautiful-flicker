@@ -4,7 +4,7 @@ A set of Python tools to compute and display lighting flicker data.
 
 For example, it can plot a flicker waveform and display automatically-computed flicker metrics:
 
-![Flicker Waveform](/out/fullheight.png)
+![Flicker Waveform](/out/example_0.png)
 
 It can plot the flicker frequency and percentage on an IEEE PAR 1789-2015 flicker graphic:
 
@@ -30,7 +30,10 @@ pip install -r src/requirements.txt
 
 ### Examples
 
-Examples of how to use this project can be found in the [examples](/examples/) folder.
+Examples of how to use this project can be found in the [examples](/examples/) folder:
+
+* [Example 0: Importing and Plotting Waveforms](/examples/Example%200%20-%20Importing%20and%20Plotting%20Waveforms.ipynb)
+* **More to come!**
 
 To run and modify the Jupyter Notebooks, or to create a new one: 
 
