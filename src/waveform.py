@@ -31,7 +31,7 @@ from scipy.signal import savgol_filter, blackmanharris, argrelextrema
 from scipy.integrate import simps
 from .utils import round_output, bool_to_pass_fail
 from .plot import waveform_graph
-from .standards import well_building_standard_v2, california_ja8_2019
+from .standards import well_building_standard_v2, california_ja8_2019, ieee_1789_2015
 
 
 class Waveform:
@@ -70,6 +70,8 @@ class Waveform:
         The flicker index of the waveform
     percent_flicker : float
         The percent flicker of the waveform
+    ieee_1789_2015 : str
+        Whether this waveform complies with IEEE 1789-2015
     well_standard_v2 : bool
         Whether this waveform complies with WELL v2 L7
     california_ja8_2019 : bool
@@ -109,6 +111,8 @@ class Waveform:
         Plots the time-series waveform graphic
     summary(verbose=False, format='String', rounded=True)
         Returns a summary of the parameters of this waveform instance
+    get_ieee_1789_2015()
+        Whether this waveform complies with the IEEE 1789-2015 flicker requirements
     get_well_standard_v2()
         Whether this waveform complies with the WELL v2 L7 flicker requirements
     get_california_ja8_2019()
@@ -146,6 +150,7 @@ class Waveform:
         self.one_period = n_periods(self.data, self.v_avg, self.period, num_periods=1)
         self.flicker_index = flicker_index(self.one_period, self.v_avg)
         self.percent_flicker = percent_flicker(self.v_max, self.v_pp)
+        self.ieee_1789_2015 = ieee_1789_2015(self.frequency, self.percent_flicker)
         self.well_standard_v2 = well_building_standard_v2(self.frequency, self.percent_flicker)
         self.california_ja8_2019 = california_ja8_2019(self.frequency, self.percent_flicker)
 
@@ -388,6 +393,18 @@ class Waveform:
         return round_output(self.flicker_index, rounded, digits)
 
 
+    def get_ieee_1789_2015(self) -> str:
+        """Whether this waveform complies with the IEEE 1789-2015 flicker requirements
+
+        Returns
+        -------
+        str
+            Either of: "No Risk", "Low Risk", "High Risk"
+        """
+
+        return self.ieee_1789_2015
+
+
     def get_well_standard_v2(self) -> bool:
         """Whether this waveform complies with the WELL v2 L7 flicker requirements
 
@@ -472,6 +489,7 @@ class Waveform:
                     "V_max: " + str(self.get_v_max(rounded)) + " V\n" + \
                     "V_avg: " + str(self.get_v_avg(rounded)) + " V\n" + \
                     "V_pp: " + str(self.get_v_pp(rounded)) + " V\n" + \
+                    "IEEE 1789-2015: " + self.ieee_1789_2015 + "\n" + \
                     "WELL v2 L7: " + bool_to_pass_fail(self.well_standard_v2) + "\n" + \
                     "California JA8 2019: " + bool_to_pass_fail(self.california_ja8_2019)
 
@@ -489,6 +507,7 @@ class Waveform:
                 out['v_max'] = self.get_v_max(rounded)
                 out['v_avg'] = self.get_v_avg(rounded)
                 out['v_pp'] = self.get_v_pp(rounded)
+                out['IEEE 1789-2015'] = self.ieee_1789_2015
                 out['WELL v2 L7'] = self.well_standard_v2
                 out['California JA8 2019'] = self.california_ja8_2019
 

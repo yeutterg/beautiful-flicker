@@ -12,11 +12,40 @@ The functions are:
 def ieee_1789_2015(frequency:float, percent_flicker:float) -> str:
     """Tests for compliance with IEEE 1789-2015
 
-    TODO: This function is not yet implemented!
+    Refer to 8.1.1 Simple recommended practices in IEEE 1789-2015 for rule definitions
 
-    TODO: Return values for No risk, low risk, high risk
+    Parameters
+    ----------
+    frequency : float
+        The flicker frequency in Hertz
+    percent_flicker : float
+        The flicker percentage
+
+    Returns
+    -------
+    str
+        Either of: "No Risk", "Low Risk", "High Risk"
     """
-    return None
+
+    if frequency > 3000:
+        return "No Risk"
+
+    if frequency < 90:
+        if percent_flicker < 0.01 * frequency:
+            return "No Risk"
+
+        if percent_flicker < 0.025 * frequency:
+            return "Low Risk"
+
+    # Other flicker <= 3 kHz
+    if percent_flicker < 0.0333 * frequency:
+        return "No Risk"
+            
+    if frequency <= 1250:
+        if percent_flicker < 0.08 * frequency:
+            return "Low Risk"
+
+    return "High Risk"
 
 
 def california_ja8_2019(frequency:float, percent_flicker:float) -> bool:
