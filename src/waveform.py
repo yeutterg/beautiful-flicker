@@ -464,7 +464,7 @@ class Waveform:
             If False, will display: 
                 Frequency, Percent Flicker, Flicker Index (and Name for dict format)
             If True, will display all of the above, plus:
-                Period, Frame Rate, V_min, V_max, V_avg, V_pp, WELL v2 L7, California JA 2019
+                Period, Frame Rate, V_min, V_max, V_avg, V_pp, IEEE 1789-2015, WELL v2 L7, California JA 2019
         format : str
             The format of the output, either 'String' or 'Dict'
         rounded : bool
