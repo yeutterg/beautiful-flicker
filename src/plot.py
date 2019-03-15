@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors
 import itertools
 from matplotlib.ticker import PercentFormatter, ScalarFormatter
+from .utils import bool_to_pass_fail
 from sklearn.preprocessing import minmax_scale
 from pylab import text
 
@@ -105,7 +106,8 @@ def ieee_par_1789_graph(
 
 
 def waveform_graph(waveform, figsize:tuple=(8,4), suppress:bool=False, filename:str=None, 
-                   showstats:bool=True, num_periods:int=None, fullheight:bool=False):
+                   showstats:bool=True, showstandards:bool=True, num_periods:int=None, 
+                   fullheight:bool=False):
     """Plots the time-domain flicker waveform
 
     Parameters
@@ -120,6 +122,8 @@ def waveform_graph(waveform, figsize:tuple=(8,4), suppress:bool=False, filename:
         If specified, will save the file named as such, e.g.: filename='../out/this_graph.png'
     showstats : bool
         If True, will show the flicker frequency, percent, and index on the bottom left of the graph
+    showstandards : bool
+        If True, will display IEEE, WELL, and JA8 test results on the bottom right of the graph
     num_periods : int or None
         If not None, will truncate the graph to the specified number of periods. 
         NOTE: Must be less than the number of periods present in the data
@@ -173,6 +177,13 @@ def waveform_graph(waveform, figsize:tuple=(8,4), suppress:bool=False, filename:
     if showstats:
         text(0.02, 0.1, waveform.summary(), ha='left', va='center', transform=ax.transAxes)
 
+    # show standard test results on the graph
+    if showstandards:
+        std_text = "IEEE 1789: " + waveform.get_ieee_1789_2015() + \
+            "\nCalifornia JA8: " +  bool_to_pass_fail(waveform.get_california_ja8_2019()) + \
+            "\nWELL v2: " +  bool_to_pass_fail(waveform.get_well_standard_v2())
+        text(0.955, 0.1, std_text, ha='right', va='center', transform=ax.transAxes)
+
     # save the figure if a filename was specified
     if filename:
         plt.savefig(filename, dpi=300)
@@ -180,4 +191,28 @@ def waveform_graph(waveform, figsize:tuple=(8,4), suppress:bool=False, filename:
     # show the plot
     if not suppress:
         plt.show()
+
+
+def standards_color(result:str) -> str:
+    """Returns colors for standards result labels
+
+    For example, "Pass" returns 'green' and "Fail" returns 'red'
+
+    Parameters
+    ----------
+    result : str
+        The text string to apply color to
+
+    Returns
+    -------
+    str
+        The color, either 'green', 'yellow', or 'red'
+    """
+
+    if result is "Pass" or result is "No Risk":
+        return 'green'
+    elif result is "Low Risk":
+        return 'yellow'
+    else:
+        return 'red'
     
