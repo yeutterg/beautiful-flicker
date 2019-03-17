@@ -8,5 +8,9 @@ WORKDIR /src
 # Add the Jupyter directory
 COPY /examples /examples
 
+# Add the input and output directories
+COPY /CSVs /CSVs
+COPY /out /out
+
 # Install requirements
 RUN pip install -r requirements.txt
