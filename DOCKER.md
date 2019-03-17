@@ -9,13 +9,13 @@ docker build --tag beautiful-flicker .
 To run the project and access the command line, run:
 
 ```console
-./src/run-docker.sh
+sh src/run-docker.sh
 ```
 
 To load the Jupyter Notebook server, run:
 
 ```console
-./src/run-docker.sh --jupyter
+sh src/run-docker.sh --jupyter
 ```
 
 You will be able to access the Jupyter server at http://localhost:8888/ . The token will be provided by Jupyter from the command line.
