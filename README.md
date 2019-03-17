@@ -52,9 +52,7 @@ Examples of how to use this project can be found in the [examples](/examples/) f
 
 In addition to the heavily-documented [codebase](/src/), an HTML version of the documentation is available. Access it by cloning the repository and opening this location in your browser:
 
-```
 /docs/build/html/index.html 
-```
 
 ## Selected Flicker Resources
 
