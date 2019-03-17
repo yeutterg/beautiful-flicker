@@ -16,17 +16,29 @@ This tool can be scripted for use in automated test scenarios. For custom versio
 
 **See also:** [Beautiful Photometry](https://github.com/yeutterg/beautiful-photometry)
 
-## Install
+## Install and Use
+
+### Local Version
 
 Make sure you have Python installed in your environment. This only works with Python 3.5+.
 
 Clone this repository, cd to the downloaded directory, and install necessary dependencies:
 
-```
+```console
 pip install -r src/requirements.txt
 ```
 
-## Use
+To use Jupyter Notebooks, run from the root of this project:
+
+```console
+jupyter notebook examples/
+```
+
+### Docker Version
+
+Alternatively, you can run this project in Docker. This is more likely to work across different systems.
+
+Instructions for Docker are provided in [DOCKER.md](DOCKER.md)
 
 ### Examples
 
@@ -35,15 +47,6 @@ Examples of how to use this project can be found in the [examples](/examples/) f
 * [Example 0: Importing and Plotting Waveforms](/examples/Example%200%20-%20Importing%20and%20Plotting%20Waveforms.ipynb)
 * **More to come!**
 
-To run and modify the Jupyter Notebooks, or to create a new one: 
-
-1. Follow the installation instructions
-
-2. Run from the root of this project:
-
-    ```
-    jupyter notebook examples/
-    ```
 
 ### Documentation
 
