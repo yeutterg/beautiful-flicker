@@ -1,5 +1,8 @@
 # Docker Installation and Use
 
+This Docker configuration allows you to keep dependencies independent of your host system (in a Docker container).
+Note that the files are still run from the host, not copied to the container.
+
 With Docker installed, clone the repository, and from the project root, run:
 
 ```console
