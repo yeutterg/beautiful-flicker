@@ -164,6 +164,7 @@ class Waveform:
             self.ieee_1789_2015 = ieee_1789_2015(self.frequency, self.percent_flicker)
             self.well_standard_v2 = well_building_standard_v2(self.frequency, self.percent_flicker)
             self.california_ja8_2019 = california_ja8_2019(self.frequency, self.percent_flicker)
+            (self.extrapolated, self.extrapolated_periods) = extrapolate(self.one_period, self.v_pp)
         except Exception as e:
             print('WARNING: Could not import waveform at file location ' + filename)
             print(e)
@@ -458,6 +459,17 @@ class Waveform:
         """
 
         return self.california_ja8_2019
+
+
+    def get_extrapolated_periods():
+
+        return self.extrapolated_periods
+
+    
+    def plot_extrapolated(self, filename:str=None, showstats:bool=True, figsize:tuple=(8,4)):
+
+        waveform_graph(waveform=self, data=self.extrapolated, filename=filename, \
+                       showstats=showstats, fullheight=True, figsize=figsize)
 
 
     def plot(self, num_periods:int=None, filename:str=None, showstats:bool=True, 
@@ -941,3 +953,19 @@ def n_periods(data:np.ndarray, v_avg:float, period:float, num_periods:int=1) -> 
 
     # Slice the array to the number of periods and return
     return data[idx_avg:idx_avg+num_periods*idx_1,:]
+
+
+def extrapolate(one_period:np.ndarray, v_pp:float) -> tuple:
+
+    # Get the number of periods needed to extend y axis to 0
+    num_periods = int(1 / v_pp) + 1
+
+    out_array = np.copy(one_period)
+    
+    for i in range(1, num_periods):
+        max_out = np.max(out_array[:,0])
+        new_period = np.copy(one_period)
+        new_period[:,0] += max_out
+        out_array = np.vstack((out_array, new_period))  
+
+    return (out_array, num_periods)
