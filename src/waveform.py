@@ -943,6 +943,7 @@ def n_periods(data:np.ndarray, v_avg:float, period:float, num_periods:int=1) -> 
     """
 
     # Slice the array to the first period (so we can find the rising edge average)
+    data = np.copy(data)
     t_0 = data[0,0]
     delta = data[1,0] - t_0
     idx_1 = int(period / delta)
@@ -951,8 +952,14 @@ def n_periods(data:np.ndarray, v_avg:float, period:float, num_periods:int=1) -> 
     # Find the first instance of the average
     idx_avg = find_nearest_idx_rising(data[:,1], v_avg)
 
-    # Slice the array to the number of periods and return
-    return data[idx_avg:idx_avg+num_periods*idx_1,:]
+    # Slice the array to the number of periods
+    out = data[idx_avg:idx_avg+num_periods*idx_1,:]
+
+    # Make the time series start at 0
+    min_val = out[0,0]
+    out[:,0] -= min_val
+
+    return out
 
 
 def extrapolate(one_period:np.ndarray, v_pp:float) -> tuple:
@@ -960,12 +967,19 @@ def extrapolate(one_period:np.ndarray, v_pp:float) -> tuple:
     # Get the number of periods needed to extend y axis to 0
     num_periods = int(1 / v_pp) + 1
 
+    # Copy the first period directly
     out_array = np.copy(one_period)
     
     for i in range(1, num_periods):
-        max_out = np.max(out_array[:,0])
+        # Get the maximum time step of the array so far, in addition the time interval
+        max_out = out_array[-1,0]
+        time_interval = out_array[1,0]
+
+        # Make a new period picking up at the end of the previous maximum time step
         new_period = np.copy(one_period)
-        new_period[:,0] += max_out
+        new_period[:,0] += (max_out + time_interval)
+
+        # Stack the output array so far with the 
         out_array = np.vstack((out_array, new_period))  
 
     return (out_array, num_periods)
