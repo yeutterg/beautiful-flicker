@@ -1,21 +1,28 @@
 """Handles Flicker Waveform Data
 
-The class and methods contained herein allow you to generate flicker waveforms and 
+The classes and methods contained herein allow you to generate flicker waveforms and 
 perform relevant calculations, including flicker index, frequency, and percent. 
 Plots can also be generated directly from the waveform.
 
-It is recommended to simply create instances of the Waveform class, as opposed to 
-using methods outside the class, as this will automatically perform all necessary
+For single waveforms: It is recommended to simply create instances of the Waveform class, 
+as opposed to using methods outside the class, as this will automatically perform all necessary
 calculations on initialization. In addition, class methods are easily callable
 (e.g. Waveform.plot(), Waveform.get_frequency())
 
-The class is:
+For multiple waveforms: It is recommended to import a whole directory using instances of
+the WaveformCollection class.
+
+The classes are:
 
     * Waveform - A class used to represent a flicker waveform
+    * WaveformCollecion - A class used to quickly import and contain multiple Waveforms
 
 The functions are:
 
     * import_waveform_csv - Imports a waveform from a CSV file, typically produced by an oscilloscope
+    * import_directory - Imports all valid waveforms from the CSV files in the directory (and subdirectories)
+    * get_files_in_directory - Gets the paths and filenames of all files in the directory (and subdirectories)
+    * get_names_in_waveform_list - Gets the names of all Waveform objects in a list of Waveforms
     * denoise - Applies the Savitzky-Golay Filter to remove noise
     * framerate - Gets the frame rate (samples per second) of the data
     * find_nearest_idx - Finds the index of the nearest value in an array
@@ -80,6 +87,8 @@ class Waveform:
 
     Methods
     -------
+    rename(new_name)
+        Renames the Waveform
     get_name()
         Gets the name of this waveform instance
     get_data()
@@ -164,18 +173,25 @@ class Waveform:
     # Setters:
 
     def rename(self, new_name):
+        """Renames the Waveform
+
+        Parameters
+        ----------
+        new_name : str
+            The new name of this Waveform instance
+        """
 
         self.name = new_name
 
     # Getters:
 
     def get_name(self) -> str:
-        """Gets the name of this waveform instance
+        """Gets the name of this Waveform instance
 
         Returns
         -------
         str
-            The name of this waveform instance
+            The name of this Waveform instance
         """
 
         return self.name
@@ -486,7 +502,8 @@ class Waveform:
             If True (default), will round the output values
             If False, will not round the output values
 
-        Returns:
+        Returns
+        -------
         str or dict
             If format = 'String': A String summarizing the waveform
             If format = 'Dict': A dict summarizing the waveform
@@ -533,17 +550,80 @@ class Waveform:
 
 
 class WaveformCollection():
+    """A class used to quickly import and contain multiple Waveforms
+
+    This class is initialized by specifying a path containing waveform CSVs. All valid waveforms
+    in the directories (and subdirectories) will be imported. The names of all imported waveforms
+    are available via get_names(), and you can get a specific waveform by calling get('Name of waveform')
+
+    Attributes
+    ----------
+    waveforms : list
+        A list of Waveform objects
+    names : list
+        The names of all the Waveform objects in the collection
+
+    Methods
+    -------
+    get_names()
+        Returns a list of the names of this waveforms in the collection
+    get_waveforms()
+        Returns a list of the Waveform objects in the collection
+    get(name)
+        Returns a Waveform based on its name
+    """
+
     def __init__(self, path):
+        """Initializes this WaveformCollection
+
+        Parameters
+        ----------
+        path : str
+            The path to the directory where the waveform CSVs are located
+        """
+
         self.waveforms = import_directory(path)
         self.names = get_names_in_waveform_list(self.waveforms)
 
+
     def get_names(self) -> list:
+        """Returns a list of the names of this waveforms in the collection
+
+        Returns
+        -------
+        list
+            A list of names of the waveforms in this collection
+        """
+
         return self.names
 
+
     def get_waveforms(self) -> list:
+        """Returns a list of the Waveform objects in the collection
+
+        Returns
+        -------
+        list
+            A list of Waveform objects in this collection
+        """
+
         return self.waveforms
 
-    def get(self, name) -> Waveform:
+
+    def get(self, name:str) -> Waveform:
+        """Returns a Waveform based on its name
+
+        Parameters
+        ----------
+        name : str
+            The name of the Waveform
+
+        Returns
+        -------
+        Waveform
+            The Waveform object
+        """
+
         for w in self.waveforms:
             if w.get_name() == name:
                 return w
@@ -576,6 +656,20 @@ def import_waveform_csv(filename:str) -> np.ndarray:
 
 
 def import_directory(dir:str) -> list:
+    """Imports all valid waveforms from the CSV files in the directory (and subdirectories)
+
+    NOTE: For each file, format should be [time(seconds), volts] and header info should be removed
+
+    Parameters
+    ----------
+    dir : str
+        The path to the directory
+
+    Returns
+    -------
+    list
+        A list of the Waveform objects imported    
+    """
 
     # Get all the files in this directory (including subdirectories)
     (filenames, paths) = get_files_in_directory(dir)
@@ -588,10 +682,21 @@ def import_directory(dir:str) -> list:
     return waveforms
 
     
-
-
 def get_files_in_directory(dir:str) -> tuple:
-    files = []
+    """Gets the paths and filenames of all files in the directory (and subdirectories)
+
+    Parameters
+    ----------
+    dir : str
+        The path to the directory
+
+    Returns
+    -------
+    tuple
+        (The file names with formatting and extensions removed, the path to the file including filename)
+    """
+
+    names = []
     paths = []
 
     for (dirpath, dirnames, filenames) in walk(dir):
@@ -609,15 +714,30 @@ def get_files_in_directory(dir:str) -> tuple:
                 # Format the string to remove the format and underscores
                 f = f.split('.')[0]
                 f = f.replace('_', ' ')
-                files.append(f)
+                names.append(f)
                 
-    return (files, paths)
+    return (names, paths)
 
 
 def get_names_in_waveform_list(waveform_list) -> list:
+    """Gets the names of all Waveform objects in a list of Waveforms
+
+    Parameters
+    ----------
+    waveform_list : list
+        A list of Waveform objects
+
+    Returns
+    -------
+    list
+        A list of the names of the Waveform objects in waveform_list
+    """
+
     names = []
+
     for w in waveform_list:
         names.append(w.get_name())
+
     return names
 
 
