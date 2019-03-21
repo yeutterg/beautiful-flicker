@@ -27,6 +27,7 @@ The functions are:
 """
 
 import numpy as np
+from os import walk
 from scipy.signal import savgol_filter, blackmanharris, argrelextrema
 from scipy.integrate import simps
 from .utils import round_output, bool_to_pass_fail
@@ -133,27 +134,40 @@ class Waveform:
             If False, data will not be denoised
         """
 
-        self.name = name
-        self.data = import_waveform_csv(filename)
-        if remove_noise:
-            self.data = denoise(self.data)
-            self.denoised = True
-        else:
-            self.denoised = False
-        self.framerate = framerate(self.data)
-        self.v_max = self.data[:,1].max()
-        self.v_min = self.data[:,1].min()
-        self.v_pp = self.v_max - self.v_min
-        self.v_avg = np.mean([self.v_max, self.v_min])  
-        self.frequency = frequency(self.data, self.framerate, self.v_avg)
-        self.period = 1 / self.frequency
-        self.one_period = n_periods(self.data, self.v_avg, self.period, num_periods=1)
-        self.flicker_index = flicker_index(self.one_period, self.v_avg)
-        self.percent_flicker = percent_flicker(self.v_max, self.v_pp)
-        self.ieee_1789_2015 = ieee_1789_2015(self.frequency, self.percent_flicker)
-        self.well_standard_v2 = well_building_standard_v2(self.frequency, self.percent_flicker)
-        self.california_ja8_2019 = california_ja8_2019(self.frequency, self.percent_flicker)
+        try: 
+            self.name = name
+            self.data = import_waveform_csv(filename)
+            if remove_noise:
+                self.data = denoise(self.data)
+                self.denoised = True
+            else:
+                self.denoised = False
+            self.framerate = framerate(self.data)
+            self.v_max = self.data[:,1].max()
+            self.v_min = self.data[:,1].min()
+            self.v_pp = self.v_max - self.v_min
+            self.v_avg = np.mean([self.v_max, self.v_min])  
+            self.frequency = frequency(self.data, self.framerate, self.v_avg)
+            self.period = 1 / self.frequency
+            self.one_period = n_periods(self.data, self.v_avg, self.period, num_periods=1)
+            self.flicker_index = flicker_index(self.one_period, self.v_avg)
+            self.percent_flicker = percent_flicker(self.v_max, self.v_pp)
+            self.ieee_1789_2015 = ieee_1789_2015(self.frequency, self.percent_flicker)
+            self.well_standard_v2 = well_building_standard_v2(self.frequency, self.percent_flicker)
+            self.california_ja8_2019 = california_ja8_2019(self.frequency, self.percent_flicker)
+        except Exception as e:
+            print('WARNING: Could not import waveform at file location ' + filename)
+            print(e)
+            self = None
 
+
+    # Setters:
+
+    def rename(self, new_name):
+
+        self.name = new_name
+
+    # Getters:
 
     def get_name(self) -> str:
         """Gets the name of this waveform instance
@@ -165,6 +179,7 @@ class Waveform:
         """
 
         return self.name
+
 
     def get_data(self) -> np.ndarray:
         """Gets the 2D array containing waveform data
@@ -517,6 +532,23 @@ class Waveform:
         return out
 
 
+class WaveformCollection():
+    def __init__(self, path):
+        self.waveforms = import_directory(path)
+        self.names = get_names_in_waveform_list(self.waveforms)
+
+    def get_names(self) -> list:
+        return self.names
+
+    def get_waveforms(self) -> list:
+        return self.waveforms
+
+    def get(self, name) -> Waveform:
+        for w in self.waveforms:
+            if w.get_name() == name:
+                return w
+
+
 def import_waveform_csv(filename:str) -> np.ndarray:
     """Imports a waveform from a CSV file, typically produced by an oscilloscope
 
@@ -534,13 +566,59 @@ def import_waveform_csv(filename:str) -> np.ndarray:
     """
 
     # Import from the file
-    data = np.genfromtxt(filename, delimiter=',')
+    data = np.genfromtxt(filename, delimiter=',', dtype=None)
 
     # Set the time axis to 0
     t_0 = data[0,0]
     data[:,0] -= t_0 
 
     return data
+
+
+def import_directory(dir:str) -> list:
+
+    # Get all the files in this directory (including subdirectories)
+    (filenames, paths) = get_files_in_directory(dir)
+
+    # Import the waveforms
+    waveforms = []
+    for i, f in enumerate(filenames):
+        waveforms.append(Waveform(paths[i], f))
+
+    return waveforms
+
+    
+
+
+def get_files_in_directory(dir:str) -> tuple:
+    files = []
+    paths = []
+
+    for (dirpath, dirnames, filenames) in walk(dir):
+        # Add the files in this directory
+        for f in filenames:
+            # Add a / if not at the end of the path (for subdirectories)
+            if dirpath[-1] is not '/':
+                dirpath += '/'
+
+            # Append the file, unless it is a system/hidden file like .DS_Store
+            if f[0] is not '.':
+                # Append the file with its path
+                paths.append(dirpath + f)
+
+                # Format the string to remove the format and underscores
+                f = f.split('.')[0]
+                f = f.replace('_', ' ')
+                files.append(f)
+                
+    return (files, paths)
+
+
+def get_names_in_waveform_list(waveform_list) -> list:
+    names = []
+    for w in waveform_list:
+        names.append(w.get_name())
+    return names
 
 
 def denoise(data:np.ndarray, window_length:int=1001) -> np.ndarray:
