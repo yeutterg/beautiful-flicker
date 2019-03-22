@@ -6,6 +6,7 @@ The functions are:
 
     * ieee_par_1789_graph - Plots the IEEE PAR 1789 logarithmic graph
     * waveform_graph - Plots the time-domain flicker waveform
+    * standards_color - Returns colors for decorating standards result labels
 """
 
 import math
@@ -107,13 +108,13 @@ def ieee_par_1789_graph(
 
 def waveform_graph(waveform, figsize:tuple=(8,4), suppress:bool=False, filename:str=None, 
                    showstats:bool=True, showstandards:bool=True, num_periods:int=None, 
-                   fullheight:bool=False):
+                   fullheight:bool=False, data=None):
     """Plots the time-domain flicker waveform
 
     Parameters
     ----------
     waveform : Waveform
-        The waveform object
+        The Waveform object
     figsize : tuple
         The (horizontal, vertical) figure size
     suppress : bool
@@ -130,10 +131,14 @@ def waveform_graph(waveform, figsize:tuple=(8,4), suppress:bool=False, filename:
     fullheight : bool
         If True, will set the bottom y limit to zero. 
         If False, will display the non-scaled waveform starting from v_min
+    data : np.ndarray or None
+        If None, will plot the regular waveform
+        If ndarray, will plot the array 
     """
     
     # Get the data from the waveform
-    data = waveform.get_data()
+    if data is None:
+        data = waveform.get_data()
 
     # Create the figure
     fig, ax = plt.subplots(1, 1, figsize=figsize)
@@ -182,7 +187,7 @@ def waveform_graph(waveform, figsize:tuple=(8,4), suppress:bool=False, filename:
         std_text = "IEEE 1789: " + waveform.get_ieee_1789_2015() + \
             "\nCalifornia JA8: " +  bool_to_pass_fail(waveform.get_california_ja8_2019()) + \
             "\nWELL v2: " +  bool_to_pass_fail(waveform.get_well_standard_v2())
-        text(0.955, 0.1, std_text, ha='right', va='center', transform=ax.transAxes)
+        text(0.955, 0.1, std_text, ha='right', va='center', transform=ax.transAxes) #, backgroundcolor='silver')
 
     # save the figure if a filename was specified
     if filename:
@@ -194,7 +199,7 @@ def waveform_graph(waveform, figsize:tuple=(8,4), suppress:bool=False, filename:
 
 
 def standards_color(result:str) -> str:
-    """Returns colors for standards result labels
+    """Returns colors for decorating standards result labels
 
     For example, "Pass" returns 'green' and "Fail" returns 'red'
 

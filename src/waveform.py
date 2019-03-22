@@ -164,7 +164,7 @@ class Waveform:
             self.ieee_1789_2015 = ieee_1789_2015(self.frequency, self.percent_flicker)
             self.well_standard_v2 = well_building_standard_v2(self.frequency, self.percent_flicker)
             self.california_ja8_2019 = california_ja8_2019(self.frequency, self.percent_flicker)
-            (self.extrapolated, self.extrapolated_periods) = extrapolate(self.one_period, self.v_pp)
+            (self.extrapolated, self.extrapolated_periods) = extrapolate(self.one_period, self.v_pp, self.framerate)
         except Exception as e:
             print('WARNING: Could not import waveform at file location ' + filename)
             print(e)
@@ -405,7 +405,7 @@ class Waveform:
         return round_output(self.percent_flicker, rounded, digits)
 
 
-    def get_flicker_index(self, rounded:bool=True, digits:int=1) -> float:
+    def get_flicker_index(self, rounded:bool=True, digits:int=2) -> float:
         """Gets the flicker index of this instance of the waveform
 
         Parameters
@@ -689,7 +689,9 @@ def import_directory(dir:str) -> list:
     # Import the waveforms
     waveforms = []
     for i, f in enumerate(filenames):
-        waveforms.append(Waveform(paths[i], f))
+        w = Waveform(paths[i], f)
+        if w is not None:
+            waveforms.append(w)
 
     return waveforms
 
@@ -753,7 +755,7 @@ def get_names_in_waveform_list(waveform_list) -> list:
     return names
 
 
-def denoise(data:np.ndarray, window_length:int=1001) -> np.ndarray:
+def denoise(data:np.ndarray, window_length:int=901) -> np.ndarray:
     """Applies the Savitzky-Golay Filter to remove noise
 
     Parameters
@@ -861,14 +863,20 @@ def frequency(data:np.ndarray, framerate:int, v_avg:float) -> float:
         The frequency in Hertz
     """
 
-    # Center the data on zero
+    # Center the data vertically on zero
     zdata = data[:,1] - v_avg
 
     # Count the zero crossings
     zero_crossings = np.where(np.diff(np.sign(zdata)))[0]
 
-    # Linear interpolation
-    return framerate / np.mean(np.diff(zero_crossings)) / 2
+    # Estimate the frequency
+    est_freq = round(framerate / np.mean(np.diff(zero_crossings)) / 2)
+
+    # For now, round everything in the range 115-130 Hz to 120 Hz
+    if est_freq >= 115 and est_freq <= 130:
+        est_freq = 120.0
+
+    return est_freq
 
 
 def percent_flicker(v_max:float, v_pp:float) -> float:
@@ -962,7 +970,7 @@ def n_periods(data:np.ndarray, v_avg:float, period:float, num_periods:int=1) -> 
     return out
 
 
-def extrapolate(one_period:np.ndarray, v_pp:float) -> tuple:
+def extrapolate(one_period:np.ndarray, v_pp:float, framerate:int) -> tuple:
 
     # Get the number of periods needed to extend y axis to 0
     num_periods = int(1 / v_pp) + 1
@@ -973,7 +981,7 @@ def extrapolate(one_period:np.ndarray, v_pp:float) -> tuple:
     for i in range(1, num_periods):
         # Get the maximum time step of the array so far, in addition the time interval
         max_out = out_array[-1,0]
-        time_interval = out_array[1,0]
+        time_interval = 1 / framerate
 
         # Make a new period picking up at the end of the previous maximum time step
         new_period = np.copy(one_period)
