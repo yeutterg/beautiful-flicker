@@ -35,7 +35,7 @@ The functions are:
 
 import numpy as np
 from os import walk
-from scipy.signal import savgol_filter, blackmanharris, argrelextrema
+from scipy.signal import savgol_filter, butter, filtfilt
 from scipy.integrate import simps
 from .utils import round_output, bool_to_pass_fail
 from .plot import waveform_graph
@@ -164,7 +164,6 @@ class Waveform:
             self.ieee_1789_2015 = ieee_1789_2015(self.frequency, self.percent_flicker)
             self.well_standard_v2 = well_building_standard_v2(self.frequency, self.percent_flicker)
             self.california_ja8_2019 = california_ja8_2019(self.frequency, self.percent_flicker)
-            (self.extrapolated, self.extrapolated_periods) = extrapolate(self.one_period, self.v_pp, self.framerate)
         except Exception as e:
             print('WARNING: Could not import waveform at file location ' + filename)
             print(e)
@@ -460,15 +459,12 @@ class Waveform:
 
         return self.california_ja8_2019
 
-
-    def get_extrapolated_periods():
-
-        return self.extrapolated_periods
-
     
-    def plot_extrapolated(self, filename:str=None, showstats:bool=True, figsize:tuple=(8,4)):
+    def plot_extrapolated(self, time_ms:int=None, filename:str=None, showstats:bool=True, figsize:tuple=(8,4)):
 
-        waveform_graph(waveform=self, data=self.extrapolated, filename=filename, \
+        (ext_data, _) = extrapolate(self.one_period, self.v_pp, self.framerate, time_ms=time_ms)
+
+        waveform_graph(waveform=self, data=ext_data, filename=filename, \
                        showstats=showstats, fullheight=True, figsize=figsize)
 
 
@@ -772,7 +768,8 @@ def denoise(data:np.ndarray, window_length:int=901) -> np.ndarray:
     """
 
     data2 = np.copy(data)
-    data2[:,1] = savgol_filter(data2[:,1], window_length, 2)
+    filter_order = 3
+    data2[:,1] = savgol_filter(data2[:,1], window_length, filter_order)
     return data2
 
 
@@ -970,10 +967,14 @@ def n_periods(data:np.ndarray, v_avg:float, period:float, num_periods:int=1) -> 
     return out
 
 
-def extrapolate(one_period:np.ndarray, v_pp:float, framerate:int) -> tuple:
+def extrapolate(one_period:np.ndarray, v_pp:float, framerate:int, time_ms:int=None) -> tuple:
 
-    # Get the number of periods needed to extend y axis to 0
-    num_periods = int(1 / v_pp) + 1
+    if time_ms is None:
+        # Get the number of periods needed to extend y axis to 0
+        num_periods = int(1 / v_pp) + 1
+    else:
+        # Get the number of periods in the specified number of ms
+        num_periods = int(framerate / 1000 * time_ms)
 
     # Copy the first period directly
     out_array = np.copy(one_period)
