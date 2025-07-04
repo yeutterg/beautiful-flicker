@@ -27,6 +27,74 @@ A modern Flask web application for lighting flicker data analysis and visualizat
 - Pre-loaded example datasets
 - Flexible column detection
 
+## Running the Web Application
+
+The main web application is a modern Flask app located in `flask_app/`. It is designed to be run in Docker (recommended) or locally for development.
+
+### 1. Run with Docker Compose (Recommended)
+
+1. **Build and start the app:**
+   ```bash
+   docker-compose up --build
+   ```
+   This will build the image and start the web server on [http://localhost:8080](http://localhost:8080) by default.
+
+2. **Change the port (optional):**
+   - To use a different port, set the `PORT` environment variable:
+     ```bash
+     PORT=3000 docker-compose up
+     ```
+   - Or add a `.env` file:
+     ```env
+     PORT=3000
+     ```
+
+3. **Stop the app:**
+   ```bash
+   docker-compose down
+   ```
+
+### 2. Run Directly with Docker
+
+1. **Build the image:**
+   ```bash
+   docker build -t beautiful-flicker .
+   ```
+2. **Run the container:**
+   ```bash
+   docker run -p 8080:8080 beautiful-flicker
+   ```
+   - To use a different port:
+     ```bash
+     docker run -p 3000:8080 -e PORT=3000 beautiful-flicker
+     ```
+
+### 3. Development with Hot Reloading
+
+For development, you can mount the source code as volumes for live code reloading. Uncomment the volume mounts in `docker-compose.yml`:
+
+```yaml
+    volumes:
+      - ./flask_app:/app/flask_app
+      - ./src:/app/src
+```
+
+Then run:
+```bash
+PORT=8080 docker-compose up
+```
+
+You can also run the Flask app directly for development:
+```bash
+cd flask_app
+python app.py --debug
+```
+
+### 4. Accessing the Web UI
+
+Once running, open your browser to:
+- [http://localhost:8080](http://localhost:8080) (or your chosen port)
+
 ## Quick Start with Docker
 
 ### Prerequisites
