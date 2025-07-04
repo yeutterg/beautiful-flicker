@@ -100,6 +100,12 @@ class ChartGenerator:
         Returns:
             Dictionary with chart data including base64 encoded image
         """
+        # Validate that required fields exist
+        required_fields = ['frequency', 'percent_flicker']
+        missing_fields = [field for field in required_fields if field not in analysis]
+        if missing_fields:
+            raise ValueError(f"Missing analysis fields for IEEE plot: {missing_fields}")
+        
         # Prepare data for IEEE plot
         freq = analysis['frequency']
         pct_flicker = analysis['percent_flicker'] / 100  # Convert to decimal
@@ -337,6 +343,12 @@ class ChartGenerator:
     
     def _add_metrics_overlay(self, ax, analysis: Dict[str, Any]):
         """Add metrics overlay to the plot."""
+        # Validate that required fields exist
+        required_fields = ['frequency', 'percent_flicker', 'flicker_index']
+        missing_fields = [field for field in required_fields if field not in analysis]
+        if missing_fields:
+            raise ValueError(f"Missing analysis fields: {missing_fields}")
+        
         metrics_text = (
             f"Frequency: {analysis['frequency']} Hz\n"
             f"Percent Flicker: {analysis['percent_flicker']}%\n"
@@ -351,6 +363,12 @@ class ChartGenerator:
     
     def _add_standards_overlay(self, ax, analysis: Dict[str, Any]):
         """Add standards compliance overlay to the plot."""
+        # Validate that required fields exist
+        required_fields = ['ieee_1789_2015', 'california_ja8_2019', 'well_standard_v2']
+        missing_fields = [field for field in required_fields if field not in analysis]
+        if missing_fields:
+            raise ValueError(f"Missing analysis fields: {missing_fields}")
+        
         # Color mapping for results
         color_map = {
             'No Risk': 'green',

@@ -61,6 +61,9 @@ def upload_file():
                 # Perform initial analysis
                 analysis = flicker_analyzer.analyze(data)
                 
+                # Store analysis in session
+                session_data[session_id]['analysis'] = analysis
+                
                 return jsonify({
                     'success': True,
                     'session_id': session_id,
@@ -81,6 +84,9 @@ def upload_file():
             
             # Perform initial analysis
             analysis = flicker_analyzer.analyze(data)
+            
+            # Store analysis in session
+            session_data[session_id]['analysis'] = analysis
             
             return jsonify({
                 'success': True,
@@ -267,6 +273,9 @@ def load_example(filepath):
         }
 
         analysis = flicker_analyzer.analyze(data)
+        
+        # Store analysis in session
+        session_data[session_id]['analysis'] = analysis
 
         return jsonify({
             'success': True,
