@@ -8,14 +8,12 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_svg_renderer import FigureCanvasSVG
+# Note: SVG export is handled by fig.savefig() which doesn't require explicit backend import
 from matplotlib.backends.backend_pdf import PdfPages
 from typing import Dict, Any, Optional, Tuple
 
-# Add the src directory to the path to import existing modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..', 'src'))
-
-from plot import ieee_par_1789_graph
+# Import from the src directory (copied to /app/src/ in Docker)
+from src.plot import ieee_par_1789_graph
 
 
 class ChartGenerator:

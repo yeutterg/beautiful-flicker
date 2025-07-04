@@ -5,11 +5,9 @@ import os
 import numpy as np
 from typing import Dict, Any, Tuple
 
-# Add the src directory to the path to import existing modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..', 'src'))
-
-from waveform import Waveform, frequency, percent_flicker, flicker_index
-from standards import ieee_1789_2015, california_ja8_2019, well_building_standard_v2
+# Import from the src directory (copied to /app/src/ in Docker)
+from src.waveform import Waveform, frequency, percent_flicker, flicker_index
+from src.standards import ieee_1789_2015, california_ja8_2019, well_building_standard_v2
 
 
 class FlickerAnalyzer:

@@ -18,12 +18,12 @@ matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-from modules.flicker_analysis import FlickerAnalyzer
-from modules.visualization import ChartGenerator
-from modules.data_processing import CSVProcessor
+from flask_app.modules.flicker_analysis import FlickerAnalyzer
+from flask_app.modules.visualization import ChartGenerator
+from flask_app.modules.data_processing import CSVProcessor
 
 app = Flask(__name__)
-app.config.from_object('config.Config')
+app.config.from_object('flask_app.config.Config')
 CORS(app)
 
 # Initialize components
