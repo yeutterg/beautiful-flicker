@@ -713,11 +713,11 @@ def get_files_in_directory(dir:str) -> tuple:
         # Add the files in this directory
         for f in filenames:
             # Add a / if not at the end of the path (for subdirectories)
-            if dirpath[-1] is not '/':
+            if dirpath[-1] != '/':
                 dirpath += '/'
 
             # Append the file, unless it is a system/hidden file like .DS_Store
-            if f[0] is not '.':
+            if f[0] != '.':
                 # Append the file with its path
                 paths.append(dirpath + f)
 

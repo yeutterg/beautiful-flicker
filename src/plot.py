@@ -49,7 +49,7 @@ def ieee_par_1789_graph(
     """
 
     # count minimum percent decimals and recompute 
-    if min_pct is not 0:
+    if min_pct != 0:
         decimals = str(min_pct)[::-1].find('.')
         min_pct = min_pct / 100.0
     else:
@@ -214,9 +214,9 @@ def standards_color(result:str) -> str:
         The color, either 'green', 'yellow', or 'red'
     """
 
-    if result is "Pass" or result is "No Risk":
+    if result == "Pass" or result == "No Risk":
         return 'green'
-    elif result is "Low Risk":
+    elif result == "Low Risk":
         return 'yellow'
     else:
         return 'red'

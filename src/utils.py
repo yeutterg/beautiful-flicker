@@ -34,7 +34,7 @@ def round_output(value:float, toround:bool=True, digits:int=2):
     """
 
     if toround:
-        if digits is not None or digits is not 0:
+        if digits is not None or digits != 0:
             return round(value, digits)
         else: 
             return int(round(value))
