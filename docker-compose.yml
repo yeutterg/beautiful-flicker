@@ -13,6 +13,7 @@ services:
     volumes:
       # Mount the data directory for examples
       - ./flask_app/data:/app/flask_app/data
+      - ./CSVs:/app/CSVs
       # Optional: mount for development
       # - ./flask_app:/app/flask_app
       # - ./src:/app/src

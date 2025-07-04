@@ -212,63 +212,69 @@ def export_chart(format):
 
 @app.route('/api/examples', methods=['GET'])
 def get_examples():
-    """Get list of example CSV files."""
+    """Recursively discover example CSV files in the top-level CSVs directory."""
+    
     try:
+        # Base directory containing all example CSVs (mounted/copied into the container)
+        base_dir = os.path.abspath(os.path.join(app.root_path, '..', 'CSVs'))
         examples = []
-        example_dir = os.path.join(app.root_path, 'data', 'examples')
-        
-        for filename in os.listdir(example_dir):
-            if filename.endswith('.csv'):
-                examples.append({
-                    'filename': filename,
-                    'name': filename.replace('.csv', '').replace('_', ' ').title()
-                })
-        
-        return jsonify({
-            'success': True,
-            'examples': examples
-        })
-        
+        for root, _dirs, files in os.walk(base_dir):
+            for f in files:
+                if f.lower().endswith('.csv'):
+                    abs_path = os.path.join(root, f)
+                    rel_path = os.path.relpath(abs_path, base_dir)
+                    # Create a friendly display name – strip extension, replace delimiters with spaces
+                    name = os.path.splitext(rel_path)[0].replace('_', ' ').replace('-', ' ').title()
+                    examples.append({
+                        'path': rel_path.replace('\\', '/'),  # ensure forward slashes for web
+                        'name': name
+                    })
+        # Sort alphabetically by name for nicer UX
+        examples.sort(key=lambda x: x['name'])
+        return jsonify({'success': True, 'examples': examples})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/example/<filename>', methods=['GET'])
-def load_example(filename):
+@app.route('/api/example/<path:filepath>', methods=['GET'])
+def load_example(filepath):
     """Load a specific example CSV file."""
     try:
-        # Sanitize filename
-        filename = secure_filename(filename)
-        if not filename.endswith('.csv'):
-            filename += '.csv'
-        
-        filepath = os.path.join(app.root_path, 'data', 'examples', filename)
-        
-        if not os.path.exists(filepath):
+        base_dir = os.path.abspath(os.path.join(app.root_path, '..', 'CSVs'))
+        # Normalize path to prevent traversal outside base_dir
+        safe_rel_path = os.path.normpath(filepath)
+        full_path = os.path.abspath(os.path.join(base_dir, safe_rel_path))
+
+        if not full_path.startswith(base_dir):
+            return jsonify({'success': False, 'error': 'Invalid path'}), 400
+
+        if not full_path.lower().endswith('.csv'):
+            full_path += '.csv'
+
+        if not os.path.exists(full_path):
             return jsonify({'success': False, 'error': 'Example not found'}), 404
-        
-        # Read and process the example file
-        with open(filepath, 'r') as f:
+
+        # Read and process the CSV
+        with open(full_path, 'r') as f:
             content = f.read()
-        
+
         data = csv_processor.process_csv_content(content)
-        
-        # Create session for example
+
+        # Create a new session for this example
         session_id = str(uuid.uuid4())
         session_data[session_id] = {
             'raw_data': data,
-            'filename': filename
+            'filename': os.path.basename(full_path)
         }
-        
-        # Perform initial analysis
+
         analysis = flicker_analyzer.analyze(data)
-        
+
         return jsonify({
             'success': True,
             'session_id': session_id,
             'preview': csv_processor.get_preview(data),
             'analysis': analysis
         })
-        
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 

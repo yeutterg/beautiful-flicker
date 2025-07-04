@@ -284,31 +284,27 @@ function loadExamples() {
     fetch('/api/examples')
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.examples) {
-                // Examples are hardcoded in HTML for now
-                // Could dynamically populate from API if needed
+            if (data.success && Array.isArray(data.examples)) {
+                // Clear existing options
+                elements.exampleSelect.innerHTML = '<option value="">Select an example...</option>';
+                // Populate dropdown
+                data.examples.forEach(ex => {
+                    const option = document.createElement('option');
+                    option.value = encodeURIComponent(ex.path); // keep slashes but URI-encode
+                    option.textContent = ex.name;
+                    elements.exampleSelect.appendChild(option);
+                });
             }
         })
         .catch(error => console.error('Failed to load examples:', error));
 }
 
 function handleExampleSelect(event) {
-    const example = event.target.value;
-    if (!example) return;
-    
-    // Map dropdown values to actual filenames
-    const exampleMap = {
-        '60hz_incandescent': '60hz_incandescent.csv',
-        'led_pwm': 'led_pwm_dimming.csv',
-        'fluorescent_magnetic': 'fluorescent_magnetic.csv',
-        'sample_flicker': 'Example_Waveform.csv'
-    };
-    
-    const filename = exampleMap[example] || example;
-    
+    const encodedPath = event.target.value;
+    if (!encodedPath) return;
+
     showLoading();
-    
-    fetch(`/api/example/${filename}`)
+    fetch(`/api/example/${encodedPath}`)
         .then(response => response.json())
         .then(data => {
             hideLoading();

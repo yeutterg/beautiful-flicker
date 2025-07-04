@@ -25,6 +25,9 @@ COPY flask_app/ /app/flask_app/
 # Copy the original source code (needed for analysis modules)
 COPY src/ /app/src/
 
+# Copy example CSV datasets
+COPY CSVs/ /app/CSVs/
+
 # Set environment variables
 ENV FLASK_APP=flask_app/app.py
 ENV FLASK_ENV=production
@@ -35,4 +38,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Run the application with gunicorn
-CMD gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 4 --timeout 120 flask_app.app:app
+CMD gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 1 --timeout 120 flask_app.app:app
