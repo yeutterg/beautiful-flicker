@@ -111,24 +111,55 @@ class ChartGenerator:
         pct_flicker = analysis['percent_flicker'] / 100  # Convert to decimal
         name = config.get('title', 'Measurement')
         
-        data_points = [(freq, pct_flicker, name)]
+        # Create the IEEE plot manually to have better control
+        fig, ax = plt.subplots(figsize=self._get_figsize(config))
         
-        # Create figure
-        fig = plt.figure(figsize=self._get_figsize(config))
+        # Set up the plot with IEEE specifications
+        max_freq = 3000
+        min_pct = 0.001
         
-        # Generate IEEE plot using existing function
-        ieee_par_1789_graph(
-            data_points, 
-            figsize=self._get_figsize(config),
-            showred=True,
-            showyellow=True,
-            noriskcolor=True,
-            suppress=True
-        )
+        ax.set_xlim([1, max_freq])
+        ax.set_ylim([min_pct, 1])
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        ax.set_xlabel('Frequency (Hz)', fontsize=config.get('axis_label_size', 12))
+        ax.set_ylabel('Modulation (%)', fontsize=config.get('axis_label_size', 12))
+        ax.grid(which='both', alpha=0.3)
+        ax.set_axisbelow(True)
         
-        # Apply brutalist styling to current figure
-        ax = plt.gca()
+        # Plot no risk region (green)
+        norisk_region = [[1, min_pct], [1, 0.001], [10, 0.001], [100, 0.01], [100, 0.03], [3000, 1], 
+                        [max_freq, 1], [max_freq, min_pct]]
+        norisk = plt.Polygon(norisk_region, fc='green', alpha=0.3, label='No Risk')
+        ax.add_patch(norisk)
+        
+        # Plot low risk region (yellow)
+        lowrisk_region = [[1, 0.001], [1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], 
+                         [3000, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
+        lowrisk = plt.Polygon(lowrisk_region, fc='yellow', alpha=0.3, label='Low Risk')
+        ax.add_patch(lowrisk)
+        
+        # Plot high risk region (red)
+        highrisk_region = [[1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], [1, 1]]
+        highrisk = plt.Polygon(highrisk_region, fc='red', alpha=0.2, label='High Risk')
+        ax.add_patch(highrisk)
+        
+        # Plot the data point
+        ax.scatter(freq, pct_flicker, color=self.colors['data'], s=100, marker='o', 
+                  label=name, alpha=1, edgecolors='black', linewidth=2, zorder=5)
+        
+        # Add legend
+        ax.legend(loc='upper right', fontsize=config.get('legend_size', 10))
+        
+        # Add title if configured
+        if config.get('title'):
+            ax.set_title(config['title'], fontsize=config.get('title_size', 16), 
+                        fontweight='bold', pad=20)
+        
+        # Apply brutalist styling
         self._apply_brutalist_style(fig, ax)
+        
+        plt.tight_layout()
         
         # Convert to base64
         img_data = self._fig_to_base64(fig)
@@ -460,19 +491,55 @@ class ChartGenerator:
         pct_flicker = analysis['percent_flicker'] / 100
         name = config.get('title', 'Measurement')
         
-        fig = plt.figure(figsize=self._get_figsize(config))
+        # Create the IEEE plot manually to have better control
+        fig, ax = plt.subplots(figsize=self._get_figsize(config))
         
-        ieee_par_1789_graph(
-            [(freq, pct_flicker, name)], 
-            figsize=self._get_figsize(config),
-            showred=True,
-            showyellow=True,
-            noriskcolor=True,
-            suppress=True
-        )
+        # Set up the plot with IEEE specifications
+        max_freq = 3000
+        min_pct = 0.001
         
-        ax = plt.gca()
+        ax.set_xlim([1, max_freq])
+        ax.set_ylim([min_pct, 1])
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        ax.set_xlabel('Frequency (Hz)', fontsize=config.get('axis_label_size', 12))
+        ax.set_ylabel('Modulation (%)', fontsize=config.get('axis_label_size', 12))
+        ax.grid(which='both', alpha=0.3)
+        ax.set_axisbelow(True)
+        
+        # Plot no risk region (green)
+        norisk_region = [[1, min_pct], [1, 0.001], [10, 0.001], [100, 0.01], [100, 0.03], [3000, 1], 
+                        [max_freq, 1], [max_freq, min_pct]]
+        norisk = plt.Polygon(norisk_region, fc='green', alpha=0.3, label='No Risk')
+        ax.add_patch(norisk)
+        
+        # Plot low risk region (yellow)
+        lowrisk_region = [[1, 0.001], [1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], 
+                         [3000, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
+        lowrisk = plt.Polygon(lowrisk_region, fc='yellow', alpha=0.3, label='Low Risk')
+        ax.add_patch(lowrisk)
+        
+        # Plot high risk region (red)
+        highrisk_region = [[1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], [1, 1]]
+        highrisk = plt.Polygon(highrisk_region, fc='red', alpha=0.2, label='High Risk')
+        ax.add_patch(highrisk)
+        
+        # Plot the data point
+        ax.scatter(freq, pct_flicker, color=self.colors['data'], s=100, marker='o', 
+                  label=name, alpha=1, edgecolors='black', linewidth=2, zorder=5)
+        
+        # Add legend
+        ax.legend(loc='upper right', fontsize=config.get('legend_size', 10))
+        
+        # Add title if configured
+        if config.get('title'):
+            ax.set_title(config['title'], fontsize=config.get('title_size', 16), 
+                        fontweight='bold', pad=20)
+        
+        # Apply brutalist styling
         self._apply_brutalist_style(fig, ax)
+        
+        plt.tight_layout()
         
         return {'figure': fig}
     
