@@ -1,0 +1,10 @@
+﻿Channel:Channel1,
+Capture Time:2019-03-07 17:51:24.841,
+Length:14000000,
+Sample Rate:500MSa/s,
+Interval:2ns,
+Time Base:2ms/div,
+Delay:0s,
+Vertical Sensitivity:200mV/div,
+Vertical Offset:-1.36V,
+ch1_time(s),ch1_value(V)
