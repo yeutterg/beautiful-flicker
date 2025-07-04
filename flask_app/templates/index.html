@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}Beautiful Flicker - Analyze Lighting Flicker{% endblock %}
+
+{% block content %}
+<div class="app-container">
+    <!-- Data Input Section -->
+    <section class="section data-input-section">
+        <h2 class="section-title">Data Input</h2>
+        
+        <!-- File Upload Area -->
+        <div class="upload-container">
+            <div id="dropZone" class="drop-zone">
+                <div class="drop-zone-content">
+                    <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p class="drop-zone-text">Drop CSV file here or click to browse</p>
+                    <p class="drop-zone-subtext">Maximum file size: 50MB</p>
+                    <input type="file" id="fileInput" accept=".csv,.txt" style="display: none;">
+                </div>
+            </div>
+            
+            <!-- Alternative Input Methods -->
+            <div class="input-alternatives">
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+                
+                <!-- Paste CSV Data -->
+                <div class="paste-container">
+                    <label for="csvPaste" class="label">Paste CSV Data</label>
+                    <textarea id="csvPaste" class="textarea" placeholder="Time,Value&#10;0.000,0.95&#10;0.001,0.97&#10;..." rows="5"></textarea>
+                    <button id="processPastedData" class="btn btn-secondary">Process Pasted Data</button>
+                </div>
+                
+                <!-- Example Selector -->
+                <div class="example-container">
+                    <label for="exampleSelect" class="label">Load Example Data</label>
+                    <select id="exampleSelect" class="select">
+                        <option value="">Select an example...</option>
+                        <option value="60hz_incandescent">60Hz Incandescent Reference</option>
+                        <option value="led_pwm">LED with PWM Dimming</option>
+                        <option value="fluorescent_magnetic">Fluorescent with Magnetic Ballast</option>
+                        <option value="sample_flicker">Sample Flicker Test Data</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Preview -->
+        <div id="dataPreview" class="data-preview" style="display: none;">
+            <h3 class="preview-title">Data Preview</h3>
+            <div class="preview-stats">
+                <span class="stat-item">Total rows: <strong id="totalRows">0</strong></span>
+                <span class="stat-item">Duration: <strong id="duration">0</strong>s</span>
+                <span class="stat-item">Sample rate: <strong id="sampleRate">0</strong> Hz</span>
+            </div>
+            <div class="preview-table-container">
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th>Time (s)</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="previewTableBody">
+                        <!-- Preview rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Chart Configuration Section -->
+    <section id="chartConfigSection" class="section chart-config-section" style="display: none;">
+        <h2 class="section-title">Chart Configuration</h2>
+        
+        <div class="config-grid">
+            <!-- Basic Settings -->
+            <div class="config-group">
+                <h3 class="config-group-title">Basic Settings</h3>
+                
+                <div class="form-group">
+                    <label for="chartTitle" class="label">Chart Title</label>
+                    <input type="text" id="chartTitle" class="input" placeholder="Enter chart title">
+                </div>
+                
+                <div class="form-group">
+                    <label for="fontSelect" class="label">Font</label>
+                    <select id="fontSelect" class="select">
+                        <option value="Inter">Inter (default)</option>
+                        <option value="Helvetica Neue">Helvetica Neue</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Courier New">Courier New</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="label">Text Sizes</label>
+                    <div class="size-controls">
+                        <div class="size-control">
+                            <label for="titleSize">Title</label>
+                            <input type="range" id="titleSize" min="16" max="48" value="24" class="slider">
+                            <span class="size-value">24px</span>
+                        </div>
+                        <div class="size-control">
+                            <label for="axisLabelSize">Axis Labels</label>
+                            <input type="range" id="axisLabelSize" min="10" max="24" value="14" class="slider">
+                            <span class="size-value">14px</span>
+                        </div>
+                        <div class="size-control">
+                            <label for="legendSize">Legend</label>
+                            <input type="range" id="legendSize" min="10" max="20" value="12" class="slider">
+                            <span class="size-value">12px</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chart Overlays -->
+            <div class="config-group">
+                <h3 class="config-group-title">Chart Overlays</h3>
+                
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="showMetrics" class="checkbox" checked>
+                        <span>Show Flicker Metrics</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="showStandards" class="checkbox" checked>
+                        <span>Show Standards Compliance</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="showLegend" class="checkbox">
+                        <span>Show Legend</span>
+                    </label>
+                </div>
+                
+                <!-- Legend Configuration -->
+                <div id="legendConfig" class="legend-config" style="display: none;">
+                    <label class="label">Legend Position</label>
+                    <div class="position-grid">
+                        <button class="position-btn" data-position="top left">↖</button>
+                        <button class="position-btn" data-position="top center">↑</button>
+                        <button class="position-btn active" data-position="top right">↗</button>
+                        <button class="position-btn" data-position="middle left">←</button>
+                        <button class="position-btn" data-position="center" disabled>·</button>
+                        <button class="position-btn" data-position="middle right">→</button>
+                        <button class="position-btn" data-position="bottom left">↙</button>
+                        <button class="position-btn" data-position="bottom center">↓</button>
+                        <button class="position-btn" data-position="bottom right">↘</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Visualization Section -->
+    <section id="visualizationSection" class="section visualization-section" style="display: none;">
+        <h2 class="section-title">Visualization</h2>
+        
+        <!-- Chart Type Selector -->
+        <div class="chart-type-selector">
+            <button class="chart-type-btn active" data-chart-type="waveform">Waveform</button>
+            <button class="chart-type-btn" data-chart-type="ieee">IEEE 1789-2015</button>
+            <button class="chart-type-btn" data-chart-type="fft">FFT Spectrum</button>
+            <button class="chart-type-btn" data-chart-type="histogram">Distribution</button>
+        </div>
+        
+        <!-- Chart Display Area -->
+        <div class="chart-container">
+            <div id="chartDisplay" class="chart-display">
+                <!-- Chart will be rendered here -->
+            </div>
+            
+            <!-- Chart Controls -->
+            <div class="chart-controls">
+                <button id="resetZoom" class="btn btn-small">Reset Zoom</button>
+                <button id="fullscreen" class="btn btn-small">Fullscreen</button>
+            </div>
+        </div>
+        
+        <!-- Analysis Results -->
+        <div id="analysisResults" class="analysis-results">
+            <h3 class="results-title">Analysis Results</h3>
+            <div class="results-grid">
+                <div class="result-card">
+                    <h4>Flicker Metrics</h4>
+                    <dl class="result-list">
+                        <dt>Frequency</dt>
+                        <dd id="resultFrequency">--</dd>
+                        <dt>Percent Flicker</dt>
+                        <dd id="resultPercent">--</dd>
+                        <dt>Flicker Index</dt>
+                        <dd id="resultIndex">--</dd>
+                        <dt>RMS Variation</dt>
+                        <dd id="resultRMS">--</dd>
+                    </dl>
+                </div>
+                <div class="result-card">
+                    <h4>Standards Compliance</h4>
+                    <dl class="result-list">
+                        <dt>IEEE 1789-2015</dt>
+                        <dd id="resultIEEE" class="result-status">--</dd>
+                        <dt>California JA8</dt>
+                        <dd id="resultJA8" class="result-status">--</dd>
+                        <dt>WELL v2</dt>
+                        <dd id="resultWELL" class="result-status">--</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Export Section -->
+    <section id="exportSection" class="section export-section" style="display: none;">
+        <h2 class="section-title">Export Options</h2>
+        
+        <div class="export-grid">
+            <!-- Format Selection -->
+            <div class="export-group">
+                <h3 class="export-group-title">Export Format</h3>
+                <div class="format-buttons">
+                    <button class="format-btn active" data-format="png">PNG</button>
+                    <button class="format-btn" data-format="svg">SVG</button>
+                    <button class="format-btn" data-format="pdf">PDF</button>
+                </div>
+                
+                <div class="format-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="transparentBg" class="checkbox">
+                        <span>Transparent Background</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Export Configuration -->
+            <div class="export-group">
+                <h3 class="export-group-title">Export Settings</h3>
+                
+                <div class="form-group">
+                    <label class="label">Resolution</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="resolution" value="72" class="radio">
+                            <span>Screen (72 DPI)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="resolution" value="300" class="radio" checked>
+                            <span>Print (300 DPI)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="resolution" value="custom" class="radio">
+                            <span>Custom: <input type="number" id="customDPI" class="input-inline" value="150" min="72" max="600"> DPI</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="label">Size Preset</label>
+                    <select id="sizePreset" class="select">
+                        <option value="auto">Auto (fit content)</option>
+                        <option value="letter">Letter (8.5" × 11")</option>
+                        <option value="a4">A4 (210mm × 297mm)</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                
+                <div id="customSize" class="custom-size" style="display: none;">
+                    <div class="size-inputs">
+                        <div class="form-group">
+                            <label for="customWidth" class="label">Width</label>
+                            <input type="number" id="customWidth" class="input" value="10" min="1" max="50">
+                            <select id="widthUnit" class="select-small">
+                                <option value="in">inches</option>
+                                <option value="cm">cm</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="customHeight" class="label">Height</label>
+                            <input type="number" id="customHeight" class="input" value="6" min="1" max="50">
+                            <select id="heightUnit" class="select-small">
+                                <option value="in">inches</option>
+                                <option value="cm">cm</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="exportChart" class="btn btn-primary btn-large">Export Chart</button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Processing...</p>
+</div>
+
+<!-- Error Modal -->
+<div id="errorModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3 class="modal-title">Error</h3>
+        <p id="errorMessage" class="modal-message"></p>
+        <button id="closeError" class="btn btn-secondary">Close</button>
+    </div>
+</div>
+{% endblock %}
