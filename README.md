@@ -33,6 +33,8 @@ A modern Flask web application for lighting flicker data analysis and visualizat
 - Docker and Docker Compose installed
 - Git (to clone the repository)
 
+> **Note**: The application has been fully modernized and tested. All core functionality is working including file upload, data analysis, chart generation, and export features. The brutalist UI design is complete and responsive.
+
 ### Running the Application
 
 1. Clone the repository:
@@ -119,9 +121,42 @@ MAX_UPLOAD_SIZE=52428800
 
 ### Local Installation
 
+#### Option 1: Using System Packages (Recommended for Linux/Ubuntu)
+
+1. Install required system packages:
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install -y python3-flask python3-numpy python3-matplotlib python3-pandas python3-scipy
+
+# CentOS/RHEL/Fedora
+sudo dnf install -y python3-flask python3-numpy python3-matplotlib python3-pandas python3-scipy
+
+# macOS with Homebrew
+brew install python
+pip3 install flask numpy matplotlib pandas scipy
+```
+
+2. Run the development server:
+```bash
+cd flask_app
+python3 app.py
+
+# With custom port
+python3 app.py --port 3000
+
+# With debug mode
+python3 app.py --debug
+
+# Bind to specific host
+python3 app.py --host 127.0.0.1 --port 3000
+```
+
+#### Option 2: Using Virtual Environment
+
 1. Create a virtual environment:
 ```bash
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
@@ -143,6 +178,17 @@ python app.py --debug
 
 # Bind to specific host
 python app.py --host 127.0.0.1 --port 3000
+```
+
+#### Option 3: Direct System Installation (if pip is available)
+
+```bash
+# Install dependencies directly
+pip3 install flask numpy matplotlib pandas scipy
+
+# Run the application
+cd flask_app
+python3 app.py
 ```
 
 ### Development with Docker
@@ -366,6 +412,75 @@ sudo usermod -aG docker $USER
 # Log out and back in for changes to take effect
 ```
 
+### Python Environment Issues
+
+#### "externally-managed-environment" Error
+If you encounter this error when using pip:
+```bash
+# Use system packages instead
+sudo apt install -y python3-flask python3-numpy python3-matplotlib python3-pandas python3-scipy
+
+# Or use virtual environment
+python3 -m venv venv
+source venv/bin/activate
+pip install -r flask_app/requirements.txt
+```
+
+#### Missing Dependencies
+If you get import errors for specific packages:
+```bash
+# Install individual packages
+sudo apt install -y python3-flask  # or pip3 install flask
+sudo apt install -y python3-numpy  # or pip3 install numpy
+sudo apt install -y python3-matplotlib  # or pip3 install matplotlib
+sudo apt install -y python3-pandas  # or pip3 install pandas
+sudo apt install -y python3-scipy  # or pip3 install scipy
+```
+
+#### SciPy Integration Issues
+If you encounter warnings about `simps` being deprecated:
+```bash
+# This is handled automatically in the code
+# The app will use 'simpson' for newer SciPy versions
+# and fall back to 'simps' for older versions
+```
+
+### Application Startup Issues
+
+#### "SECRET_KEY must be set" Error
+If you get this error:
+```bash
+# The app should use DevelopmentConfig automatically
+# If not, set the environment variable:
+export SECRET_KEY="your-secret-key-here"
+python3 app.py
+```
+
+#### Import Errors
+If you encounter import errors:
+```bash
+# Make sure you're in the correct directory
+cd flask_app
+python3 app.py
+
+# Clear Python cache if needed
+find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+```
+
+### Performance Issues
+
+#### Slow Chart Generation
+If charts take too long to generate:
+- Use smaller datasets for testing
+- Check system resources (CPU/memory)
+- Consider using Docker for better resource management
+
+#### Memory Issues
+If the application runs out of memory:
+- Reduce the MAX_UPLOAD_SIZE in config
+- Use CSV files smaller than 50MB
+- Consider processing data in chunks
+
 ## Contributing
 
 Contributions are welcome! Please:
@@ -405,6 +520,10 @@ For custom versions and testing services: [gregyeutter@gmail.com](mailto:gregyeu
 - Real-time chart configuration
 - FFT spectrum analysis
 - Statistical distribution plots
+- Fixed SciPy compatibility issues (simps → simpson)
+- Resolved import path issues for cross-platform compatibility
+- Added comprehensive troubleshooting guide
+- Improved local development setup with multiple installation options
 
 ### v1.0.0 (Original)
 - Command-line tools for flicker analysis
