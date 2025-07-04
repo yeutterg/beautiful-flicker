@@ -36,7 +36,11 @@ The functions are:
 import numpy as np
 from os import walk
 from scipy.signal import savgol_filter, butter, filtfilt
-from scipy.integrate import simps
+try:
+    from scipy.integrate import simpson
+except ImportError:
+    # Fallback for older scipy versions
+    from scipy.integrate import simps as simpson
 from .utils import round_output, bool_to_pass_fail
 from .plot import waveform_graph
 from .standards import well_building_standard_v2, california_ja8_2019, ieee_1789_2015
@@ -713,11 +717,11 @@ def get_files_in_directory(dir:str) -> tuple:
         # Add the files in this directory
         for f in filenames:
             # Add a / if not at the end of the path (for subdirectories)
-            if dirpath[-1] is not '/':
+            if dirpath[-1] != '/':
                 dirpath += '/'
 
             # Append the file, unless it is a system/hidden file like .DS_Store
-            if f[0] is not '.':
+            if f[0] != '.':
                 # Append the file with its path
                 paths.append(dirpath + f)
 
@@ -918,8 +922,8 @@ def flicker_index(one_period:np.ndarray, v_avg:float) -> float:
     curve_top = curve_top - v_avg
 
     # Get the area under the curve for the top and all using Simpson's rule
-    area_top = simps(curve_top)
-    area_all = simps(one_period[:,1])
+    area_top = simpson(curve_top)
+    area_all = simpson(one_period[:,1])
 
     # Return the flicker index 
     return area_top / area_all
