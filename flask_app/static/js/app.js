@@ -17,9 +17,12 @@ const appState = {
         show_metrics: true,
         show_standards: true,
         show_legend: false,
-        legend_position: 'top right',
+        legend_position: 'upper left',
         format: 'png',
-        export_dpi: 300
+        export_dpi: 300,
+        width: 10,
+        height: 6,
+        aspect_ratio_locked: true
     },
     exportSettings: {
         format: 'png',
@@ -82,7 +85,17 @@ const elements = {
     manualLabel: document.getElementById('manual-label'),
     addManualPoint: document.getElementById('add-manual-point'),
     manualPointsList: document.getElementById('manual-points-list'),
-    manualPointsContainer: document.getElementById('manual-points-container')
+    manualPointsContainer: document.getElementById('manual-points-container'),
+    
+    // Chart configuration
+    chartFormat: document.getElementById('chart-format'),
+    chartDpi: document.getElementById('chart-dpi'),
+    customDpi: document.getElementById('custom-dpi'),
+    customDpiGroup: document.getElementById('custom-dpi-group'),
+    chartWidth: document.getElementById('chart-width'),
+    chartHeight: document.getElementById('chart-height'),
+    aspectRatioLock: document.getElementById('aspect-ratio-lock'),
+    legendPosition: document.getElementById('legend-position')
 };
 
 // Initialize application
@@ -142,6 +155,12 @@ function setupEventListeners() {
             
             // Update current chart type
             appState.currentChartType = e.target.dataset.chartType;
+            
+            // Show/hide IEEE-specific controls
+            const ieeeControls = document.querySelectorAll('.ieee-only');
+            ieeeControls.forEach(control => {
+                control.style.display = appState.currentChartType === 'ieee' ? 'block' : 'none';
+            });
             
             // Show visualization section if not already visible
             elements.visualizationSection.style.display = 'block';
@@ -208,6 +227,15 @@ function setupEventListeners() {
             elements.chartDisplay.requestFullscreen();
         }
     });
+    
+    // Chart configuration
+    elements.chartDpi.addEventListener('change', handleDpiChange);
+    elements.customDpi.addEventListener('input', updateChartSettings);
+    elements.chartWidth.addEventListener('input', handleDimensionChange);
+    elements.chartHeight.addEventListener('input', handleDimensionChange);
+    elements.aspectRatioLock.addEventListener('change', updateChartSettings);
+    elements.legendPosition.addEventListener('change', updateChartSettings);
+    elements.chartFormat.addEventListener('change', updateChartSettings);
 }
 
 // File Handling
@@ -737,4 +765,58 @@ function removeManualPoint(pointId) {
     }
     
     console.log('Manual point removed');
+}
+
+// New chart configuration event handlers
+function handleDpiChange() {
+    const dpiValue = elements.chartDpi.value;
+    if (dpiValue === 'custom') {
+        elements.customDpiGroup.style.display = 'block';
+        appState.chartSettings.export_dpi = parseInt(elements.customDpi.value);
+    } else {
+        elements.customDpiGroup.style.display = 'none';
+        appState.chartSettings.export_dpi = parseInt(dpiValue);
+    }
+    updateChart();
+}
+
+function handleDimensionChange(e) {
+    const isWidth = e.target.id === 'chart-width';
+    const newValue = parseFloat(e.target.value);
+    
+    if (appState.chartSettings.aspect_ratio_locked) {
+        const currentRatio = appState.chartSettings.width / appState.chartSettings.height;
+        
+        if (isWidth) {
+            appState.chartSettings.width = newValue;
+            appState.chartSettings.height = newValue / currentRatio;
+            elements.chartHeight.value = appState.chartSettings.height.toFixed(1);
+        } else {
+            appState.chartSettings.height = newValue;
+            appState.chartSettings.width = newValue * currentRatio;
+            elements.chartWidth.value = appState.chartSettings.width.toFixed(1);
+        }
+    } else {
+        if (isWidth) {
+            appState.chartSettings.width = newValue;
+        } else {
+            appState.chartSettings.height = newValue;
+        }
+    }
+    
+    updateChart();
+}
+
+function updateChartSettings() {
+    // Update all chart settings from form elements
+    appState.chartSettings.legend_position = elements.legendPosition.value;
+    appState.chartSettings.format = elements.chartFormat.value;
+    appState.chartSettings.aspect_ratio_locked = elements.aspectRatioLock.checked;
+    
+    // Update DPI if custom is selected
+    if (elements.chartDpi.value === 'custom') {
+        appState.chartSettings.export_dpi = parseInt(elements.customDpi.value);
+    }
+    
+    updateChart();
 }

@@ -328,16 +328,45 @@ body {
 }
 
 .config-group {
-    border: var(--border-width) var(--border-style) var(--color-border);
+    margin-bottom: var(--spacing-lg);
     padding: var(--spacing-md);
+    background: var(--color-gray-light);
+    border-radius: var(--border-radius);
 }
 
 .config-group-title {
-    font-size: 1.125rem;
-    font-weight: 700;
+    font-size: 1.1rem;
+    font-weight: 600;
     margin-bottom: var(--spacing-md);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    color: var(--color-text);
+    border-bottom: 2px solid var(--color-accent);
+    padding-bottom: var(--spacing-xs);
+}
+
+.form-group {
+    margin-bottom: var(--spacing-sm);
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.form-group input[type="checkbox"] {
+    margin-right: var(--spacing-xs);
+}
+
+#custom-dpi-group {
+    margin-left: var(--spacing-md);
+    padding-left: var(--spacing-md);
+    border-left: 2px solid var(--color-accent);
+}
+
+.ieee-only {
+    border-left: 3px solid #1f77b4;
+    padding-left: var(--spacing-sm);
+    background: rgba(31, 119, 180, 0.05);
 }
 
 /* Size Controls */

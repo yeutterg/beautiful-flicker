@@ -309,7 +309,7 @@ class ChartGenerator:
         """
         # Update config for export
         export_config = config.copy()
-        export_config['dpi'] = config.get('export_dpi', 300)
+        export_config['dpi'] = self._get_dpi(config)
         
         # Generate chart based on type
         if chart_type == 'waveform':
@@ -377,10 +377,14 @@ class ChartGenerator:
         return voltage
     
     def _get_figsize(self, config: Dict[str, Any]) -> Tuple[float, float]:
-        """Get figure size from config or use default."""
-        width = config.get('fig_width', self.default_figsize[0])
-        height = config.get('fig_height', self.default_figsize[1])
+        """Get figure size from config or use defaults."""
+        width = config.get('width', 10)
+        height = config.get('height', 6)
         return (width, height)
+    
+    def _get_dpi(self, config: Dict[str, Any]) -> int:
+        """Get DPI from config or use defaults."""
+        return config.get('export_dpi', 300)
     
     def _add_metrics_overlay(self, ax, analysis: Dict[str, Any]):
         """Add metrics overlay to the plot."""
@@ -661,13 +665,12 @@ class ChartGenerator:
         # Plot all data points with distinct colors and markers
         colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
         
-        legend_elements = []
-        
-        for i, (freq, pct_flicker, name) in enumerate(plot_data):
+        # Plot the actual data points
+        for i, (freq, mod, label) in enumerate(plot_data):
             color = colors[i % len(colors)]
             
             # Use different markers for manual points vs data points
-            if 'Manual' in name or 'Point' in name:
+            if 'Manual:' in label:
                 marker = 's'  # Square for manual points
                 marker_size = 120
                 edge_width = 2
@@ -679,36 +682,32 @@ class ChartGenerator:
                 alpha = 1.0
             
             # Plot the point
-            scatter = ax.scatter(freq, pct_flicker, color=color, s=marker_size, marker=marker, 
-                               alpha=alpha, edgecolors='black', linewidth=edge_width, zorder=5)
-            
-            # Add to legend elements
+            ax.scatter(freq, mod, color=color, s=marker_size, marker=marker, 
+                      alpha=alpha, edgecolors='black', linewidth=edge_width, zorder=5)
+        
+        # Add comprehensive legend
+        legend_elements = []
+        
+        # Add risk region legend
+        legend_elements.extend([
+            plt.Rectangle((0, 0), 1, 1, facecolor='lightgreen', alpha=0.3, label='No Risk'),
+            plt.Rectangle((0, 0), 1, 1, facecolor='yellow', alpha=0.3, label='Low Risk'),
+            plt.Rectangle((0, 0), 1, 1, facecolor='lightcoral', alpha=0.3, label='High Risk')
+        ])
+        
+        # Add data point legends
+        for i, (freq, mod, label) in enumerate(plot_data):
+            color = colors[i % len(colors)]
+            marker = 's' if 'Manual:' in label else 'o'
             legend_elements.append(plt.Line2D([0], [0], marker=marker, color='w', 
                                             markerfacecolor=color, markersize=8, 
-                                            markeredgecolor='black', markeredgewidth=1,
-                                            label=f'{name} ({freq:.1f} Hz, {pct_flicker*100:.1f}%)',
-                                            linestyle='None'))
+                                            label=f'{label}: {freq:.1f} Hz, {mod*100:.1f}%'))
         
-        # Create comprehensive legend with sections
-        # First add risk area legends
-        risk_legend_elements = [
-            plt.Rectangle((0,0),1,1, facecolor='green', alpha=0.3, label='No Risk'),
-            plt.Rectangle((0,0),1,1, facecolor='yellow', alpha=0.3, label='Low Risk'),
-            plt.Rectangle((0,0),1,1, facecolor='red', alpha=0.2, label='High Risk')
-        ]
+        # Get legend position from config, default to upper left
+        legend_position = config.get('legend_position', 'upper left')
         
-        # Combine risk areas and data points
-        all_legend_elements = risk_legend_elements + legend_elements
-        
-        # Create legend with better positioning
-        legend = ax.legend(handles=all_legend_elements, loc='upper right', 
-                          fontsize=config.get('legend_size', 10),
-                          frameon=True, fancybox=True, shadow=True,
-                          bbox_to_anchor=(1.02, 1), borderaxespad=0)
-        
-        # Style the legend
-        legend.get_frame().set_facecolor('white')
-        legend.get_frame().set_alpha(0.9)
+        ax.legend(handles=legend_elements, loc=legend_position, 
+                 fontsize=config.get('legend_size', 10), framealpha=0.9)
         
         # Add title if configured
         title = config.get('title', 'IEEE PAR 1789-2015 Flicker Compliance')

@@ -185,6 +185,68 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Export Configuration -->
+            <div class="config-group">
+                <h3 class="config-group-title">Export Configuration</h3>
+                
+                <div class="form-group">
+                    <label for="chart-format" class="label">Export Format</label>
+                    <select id="chart-format" class="input">
+                        <option value="png">PNG</option>
+                        <option value="svg">SVG</option>
+                        <option value="pdf">PDF</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="chart-dpi" class="label">Resolution (DPI)</label>
+                    <select id="chart-dpi" class="input">
+                        <option value="72">72 DPI (Screen)</option>
+                        <option value="150">150 DPI (Web)</option>
+                        <option value="300" selected>300 DPI (Print)</option>
+                        <option value="600">600 DPI (High Quality)</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="custom-dpi-group" style="display: none;">
+                    <label for="custom-dpi" class="label">Custom DPI</label>
+                    <input type="number" id="custom-dpi" class="input" min="50" max="1200" value="300">
+                </div>
+                
+                <div class="form-group">
+                    <label for="chart-width" class="label">Width (inches)</label>
+                    <input type="number" id="chart-width" class="input" min="2" max="20" step="0.1" value="10">
+                </div>
+                
+                <div class="form-group">
+                    <label for="chart-height" class="label">Height (inches)</label>
+                    <input type="number" id="chart-height" class="input" min="2" max="20" step="0.1" value="6">
+                </div>
+                
+                <div class="form-group">
+                    <label for="aspect-ratio-lock" class="label">
+                        <input type="checkbox" id="aspect-ratio-lock" checked> Lock Aspect Ratio
+                    </label>
+                </div>
+                
+                <div class="form-group ieee-only" style="display: none;">
+                    <label for="legend-position" class="label">Legend Position</label>
+                    <select id="legend-position" class="input">
+                        <option value="upper left" selected>Top Left</option>
+                        <option value="upper right">Top Right</option>
+                        <option value="lower left">Bottom Left</option>
+                        <option value="lower right">Bottom Right</option>
+                        <option value="center left">Center Left</option>
+                        <option value="center right">Center Right</option>
+                        <option value="upper center">Top Center</option>
+                        <option value="lower center">Bottom Center</option>
+                        <option value="center">Center</option>
+                        <option value="best">Auto (Best Fit)</option>
+                    </select>
+                </div>
+            </div>
         </div>
     </section>
     
