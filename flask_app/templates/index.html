@@ -70,6 +70,39 @@
         </div>
     </section>
     
+    <!-- Manual Entry Section -->
+    <section class="section manual-entry-section">
+        <h2 class="section-title">Manual Entry for IEEE Chart</h2>
+        
+        <div class="manual-entry-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="manual-frequency" class="label">Frequency (Hz)</label>
+                    <input type="number" id="manual-frequency" class="input" min="1" max="10000" step="0.1" placeholder="e.g., 120">
+                </div>
+                <div class="form-group">
+                    <label for="manual-modulation" class="label">Modulation (%)</label>
+                    <input type="number" id="manual-modulation" class="input" min="0.01" max="100" step="0.01" placeholder="e.g., 5.0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="manual-label" class="label">Label</label>
+                    <input type="text" id="manual-label" class="input" placeholder="e.g., Test Point 1">
+                </div>
+                <div class="form-group">
+                    <button type="button" id="add-manual-point" class="btn btn-secondary">Add Point</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Manual Points List -->
+        <div id="manual-points-list" class="manual-points-list" style="display:none;">
+            <h3>Manual Points:</h3>
+            <div id="manual-points-container"></div>
+        </div>
+    </section>
+    
     <!-- Chart Configuration Section -->
     <section id="chartConfigSection" class="section chart-config-section" style="display: none;">
         <h2 class="section-title">Chart Configuration</h2>

@@ -6,6 +6,8 @@
 const appState = {
     sessionId: null,
     currentData: null,
+    selectedDatasets: new Map(), // For multiple dataset selection
+    manualPoints: [], // For manual entry points
     chartSettings: {
         title: '',
         font: 'Inter',
@@ -16,7 +18,8 @@ const appState = {
         show_standards: true,
         show_legend: false,
         legend_position: 'top right',
-        legend_items: []
+        format: 'png',
+        export_dpi: 300
     },
     exportSettings: {
         format: 'png',
@@ -71,7 +74,15 @@ const elements = {
     loadingOverlay: document.getElementById('loadingOverlay'),
     errorModal: document.getElementById('errorModal'),
     errorMessage: document.getElementById('errorMessage'),
-    closeError: document.getElementById('closeError')
+    closeError: document.getElementById('closeError'),
+    
+    // Manual entry
+    manualFrequency: document.getElementById('manual-frequency'),
+    manualModulation: document.getElementById('manual-modulation'),
+    manualLabel: document.getElementById('manual-label'),
+    addManualPoint: document.getElementById('add-manual-point'),
+    manualPointsList: document.getElementById('manual-points-list'),
+    manualPointsContainer: document.getElementById('manual-points-container')
 };
 
 // Initialize application
@@ -173,6 +184,9 @@ function setupEventListeners() {
     elements.closeError.addEventListener('click', () => {
         elements.errorModal.style.display = 'none';
     });
+    
+    // Manual entry
+    elements.addManualPoint.addEventListener('click', handleAddManualPoint);
     
     // Chart controls
     document.getElementById('resetZoom').addEventListener('click', () => {
@@ -432,33 +446,39 @@ function updateChart() {
     
     showLoading();
     
+    // Prepare config with manual points for IEEE charts
+    const config = { ...appState.chartSettings };
+    if (appState.currentChartType === 'ieee' && appState.manualPoints.length > 0) {
+        config.manual_points = appState.manualPoints;
+    }
+    
     fetch(`/api/chart/${appState.currentChartType}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         },
         body: JSON.stringify({
             session_id: appState.sessionId,
-            config: appState.chartSettings
+            config: config
         })
     })
     .then(response => response.json())
     .then(data => {
-        hideLoading();
         if (data.success) {
-            displayChart(data.chart);
+            if (data.chart && data.chart.image) {
+                elements.chartDisplay.innerHTML = `<img src="${data.chart.image}" alt="Chart" style="max-width: 100%; height: auto;">`;
+            }
         } else {
             showError(data.error || 'Failed to generate chart');
         }
     })
     .catch(error => {
+        console.error('Chart generation error:', error);
+        showError('Failed to generate chart');
+    })
+    .finally(() => {
         hideLoading();
-        showError('Network error: ' + error.message);
     });
-}
-
-function displayChart(chartData) {
-    elements.chartDisplay.innerHTML = `<img src="${chartData.image}" alt="Flicker ${chartData.type} chart">`;
 }
 
 // Export Handling
@@ -556,3 +576,73 @@ function debounce(func, wait) {
 
 // Debounced chart update
 const debouncedChartUpdate = debounce(updateChart, 500);
+
+// Manual Point Management
+function handleAddManualPoint() {
+    const frequency = parseFloat(elements.manualFrequency.value);
+    const modulation = parseFloat(elements.manualModulation.value);
+    const label = elements.manualLabel.value.trim() || `Point ${appState.manualPoints.length + 1}`;
+    
+    if (!frequency || !modulation) {
+        showError('Please enter both frequency and modulation values');
+        return;
+    }
+    
+    if (frequency < 1 || frequency > 10000) {
+        showError('Frequency must be between 1 and 10000 Hz');
+        return;
+    }
+    
+    if (modulation < 0.01 || modulation > 100) {
+        showError('Modulation must be between 0.01 and 100%');
+        return;
+    }
+    
+    // Add to manual points
+    const point = {
+        id: Date.now(),
+        frequency: frequency,
+        modulation: modulation,
+        label: label
+    };
+    
+    appState.manualPoints.push(point);
+    
+    // Clear inputs
+    elements.manualFrequency.value = '';
+    elements.manualModulation.value = '';
+    elements.manualLabel.value = '';
+    
+    // Update display
+    updateManualPointsDisplay();
+    
+    console.log(`Added manual point: ${label} (${frequency} Hz, ${modulation}%)`);
+}
+
+function updateManualPointsDisplay() {
+    if (appState.manualPoints.length === 0) {
+        elements.manualPointsList.style.display = 'none';
+        return;
+    }
+    
+    elements.manualPointsList.style.display = 'block';
+    elements.manualPointsContainer.innerHTML = '';
+    
+    appState.manualPoints.forEach(point => {
+        const item = document.createElement('div');
+        item.className = 'manual-point-item';
+        item.innerHTML = `
+            <div class="manual-point-info">
+                <strong>${point.label}</strong>: ${point.frequency} Hz, ${point.modulation}%
+            </div>
+            <button class="manual-point-remove" onclick="removeManualPoint(${point.id})">×</button>
+        `;
+        elements.manualPointsContainer.appendChild(item);
+    });
+}
+
+function removeManualPoint(pointId) {
+    appState.manualPoints = appState.manualPoints.filter(p => p.id !== pointId);
+    updateManualPointsDisplay();
+    console.log('Manual point removed');
+}

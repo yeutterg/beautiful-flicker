@@ -287,6 +287,36 @@ def load_example(filepath):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/chart/ieee', methods=['POST'])
+def generate_ieee_chart():
+    """Generate IEEE PAR 1789-2015 compliance chart."""
+    try:
+        data = request.get_json()
+        session_id = data.get('session_id')
+        config = data.get('config', {})
+        
+        if not session_id or session_id not in session_data:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid or missing session ID'
+            })
+        
+        analysis = session_data[session_id].get('analysis', {})
+        
+        # Generate IEEE chart with potential manual points
+        chart_result = chart_generator.generate_ieee_plot(analysis, config)
+        
+        return jsonify({
+            'success': True,
+            'chart': chart_result
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
 @app.errorhandler(413)
 def request_entity_too_large(error):
     """Handle file size limit exceeded."""
