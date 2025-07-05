@@ -7,6 +7,7 @@ const appState = {
     sessionId: null,
     currentData: null,
     selectedDatasets: new Map(), // For multiple dataset selection
+    activeDatasets: [], // Array of active datasets for display
     manualPoints: [], // For manual entry points
     dataLabel: 'Data', // Label for current dataset
     chartSettings: {
@@ -17,7 +18,7 @@ const appState = {
         legend_size: 10,
         show_metrics: true,
         show_standards: true,
-        show_legend: false,
+        show_legend: true,
         legend_position: 'upper left',
         format: 'png',
         export_dpi: 300,
@@ -79,9 +80,19 @@ const elements = {
     aspectRatioLock: document.getElementById('aspect-ratio-lock'),
     
     // Visualization
-    visualizationSection: document.getElementById('visualization-section'),
-    chartDisplay: document.getElementById('chart-display'),
-    loadingSpinner: document.getElementById('loading-spinner'),
+    visualizationSection: document.getElementById('visualizationSection'),
+    chartConfigSection: document.getElementById('chartConfigSection'),
+    exportSection: document.getElementById('exportSection'),
+    chartDisplay: document.getElementById('chartDisplay'),
+    loadingSpinner: document.getElementById('loadingOverlay'),
+    analysisResults: document.getElementById('analysisResults'),
+    
+    // Data preview
+    dataPreview: document.getElementById('dataPreview'),
+    totalRows: document.getElementById('totalRows'),
+    duration: document.getElementById('duration'),
+    sampleRate: document.getElementById('sampleRate'),
+    previewTableBody: document.getElementById('previewTableBody'),
     
     // Manual entry
     manualFrequency: document.getElementById('manual-frequency'),
@@ -94,7 +105,12 @@ const elements = {
     // Error modal
     errorModal: document.getElementById('errorModal'),
     errorMessage: document.getElementById('errorMessage'),
-    closeError: document.getElementById('closeError')
+    closeError: document.getElementById('closeError'),
+    
+    // Active datasets
+    activeDatasetsSection: document.getElementById('activeDatasetsSection'),
+    datasetsList: document.getElementById('datasetsList'),
+    clearAllDatasets: document.getElementById('clearAllDatasets')
 };
 
 // Initialize application
@@ -102,6 +118,63 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     loadExamples();
 });
+
+// Dataset Management Functions
+function addDataset(sessionId, label, analysis) {
+    // Add to active datasets
+    appState.activeDatasets.push({
+        sessionId: sessionId,
+        label: label,
+        analysis: analysis
+    });
+    
+    // Update UI
+    updateDatasetsList();
+    
+    // Show datasets section if multiple datasets
+    if (appState.activeDatasets.length > 0) {
+        elements.activeDatasetsSection.style.display = 'block';
+    }
+}
+
+function removeDataset(index) {
+    appState.activeDatasets.splice(index, 1);
+    updateDatasetsList();
+    
+    // Hide section if no datasets
+    if (appState.activeDatasets.length === 0) {
+        elements.activeDatasetsSection.style.display = 'none';
+    }
+    
+    // Update chart
+    updateChart();
+}
+
+function clearAllDatasets() {
+    appState.activeDatasets = [];
+    updateDatasetsList();
+    elements.activeDatasetsSection.style.display = 'none';
+    updateChart();
+}
+
+function updateDatasetsList() {
+    elements.datasetsList.innerHTML = '';
+    
+    if (appState.activeDatasets.length === 0) {
+        elements.datasetsList.innerHTML = '<p style="text-align: center; color: #666;">No datasets loaded</p>';
+        return;
+    }
+    
+    appState.activeDatasets.forEach((dataset, index) => {
+        const item = document.createElement('div');
+        item.className = 'dataset-item';
+        item.innerHTML = `
+            <span class="dataset-name">${dataset.label}</span>
+            <button class="btn btn-small" onclick="removeDataset(${index})">Remove</button>
+        `;
+        elements.datasetsList.appendChild(item);
+    });
+}
 
 // Event Listeners Setup
 function setupEventListeners() {
@@ -160,14 +233,34 @@ function setupEventListeners() {
             // Update current chart type
             appState.currentChartType = e.target.dataset.chartType;
             
-            // Show/hide IEEE-specific controls
-            const ieeeControls = document.querySelectorAll('.ieee-only');
-            ieeeControls.forEach(control => {
-                control.style.display = appState.currentChartType === 'ieee' ? 'block' : 'none';
+            // Show/hide chart-specific controls
+            const chartTypes = ['waveform', 'ieee', 'fft', 'histogram'];
+            chartTypes.forEach(type => {
+                const controls = document.querySelectorAll(`.${type}-only`);
+                controls.forEach(control => {
+                    control.style.display = appState.currentChartType === type ? 'block' : 'none';
+                });
             });
+            
+            // Set default chart title if empty
+            if (!elements.chartTitle.value) {
+                const defaultTitles = {
+                    'waveform': 'Flicker Waveform Analysis',
+                    'ieee': 'IEEE 1789 Flicker Analysis',
+                    'fft': 'Flicker FFT Analysis',
+                    'histogram': 'Flicker Frequency Distribution'
+                };
+                elements.chartTitle.value = defaultTitles[appState.currentChartType] || '';
+                appState.chartSettings.title = elements.chartTitle.value;
+            }
             
             // Show visualization section if not already visible
             elements.visualizationSection.style.display = 'block';
+            
+            // Show chart configuration section if we have data
+            if (appState.sessionId || appState.manualPoints.length > 0) {
+                elements.chartConfigSection.style.display = 'block';
+            }
             
             // Update chart
             updateChart();
@@ -181,6 +274,11 @@ function setupEventListeners() {
     
     // Manual entry
     elements.addManualPoint.addEventListener('click', handleAddManualPoint);
+    
+    // Clear all datasets
+    if (elements.clearAllDatasets) {
+        elements.clearAllDatasets.addEventListener('click', clearAllDatasets);
+    }
 }
 
 // File Handling
@@ -231,11 +329,24 @@ function processFile(file) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            appState.sessionId = data.session_id;
-            appState.currentData = data.preview;
+            // For waveform and IEEE charts, add to datasets
+            if (['waveform', 'ieee'].includes(appState.currentChartType)) {
+                addDataset(data.session_id, appState.dataLabel, data.analysis);
+            } else {
+                // For FFT and histogram, replace current data
+                appState.sessionId = data.session_id;
+                appState.currentData = data.preview;
+            }
             
-            // Show visualization section
+            // Show visualization section and chart config
             elements.visualizationSection.style.display = 'block';
+            elements.chartConfigSection.style.display = 'block';
+            
+            // Display analysis results if available
+            if (data.analysis) {
+                displayAnalysisResults(data.analysis);
+                elements.analysisResults.style.display = 'block';
+            }
             
             // Update chart
             updateChart();
@@ -300,35 +411,63 @@ function populateExamplesDropdown(examples) {
 function handleExampleSelect() {
     const selectedExample = elements.exampleSelect.value;
     if (selectedExample) {
-        appState.dataLabel = elements.exampleLabel.value || selectedExample;
+        // Use custom label if provided, otherwise use the example name
+        const selectedText = elements.exampleSelect.options[elements.exampleSelect.selectedIndex].text;
+        appState.dataLabel = elements.exampleLabel.value || selectedText;
         loadExample(selectedExample);
     }
 }
 
 function loadExample(exampleName) {
+    console.log(`Loading example: ${exampleName}`);
     showLoading();
     
-    fetch(`/api/example/${exampleName}`)
-        .then(response => response.json())
+    // Properly encode the URL to handle spaces and special characters
+    const encodedExampleName = encodeURIComponent(exampleName);
+    
+    fetch(`/api/example/${encodedExampleName}`)
+        .then(response => {
+            console.log(`Response status: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Example data received:', data);
             if (data.success) {
-                appState.sessionId = data.session_id;
-                appState.currentData = data.preview;
+                // For waveform and IEEE charts, add to datasets
+                if (['waveform', 'ieee'].includes(appState.currentChartType)) {
+                    addDataset(data.session_id, appState.dataLabel, data.analysis);
+                } else {
+                    // For FFT and histogram, replace current data
+                    appState.sessionId = data.session_id;
+                    appState.currentData = data.preview;
+                }
                 
-                // Show visualization section
+                // Show data preview
+                displayDataPreview(data.preview);
+                
+                // Display analysis results
+                displayAnalysisResults(data.analysis);
+                
+                // Show visualization section (which includes config)
                 elements.visualizationSection.style.display = 'block';
+                elements.chartConfigSection.style.display = 'block';
+                elements.analysisResults.style.display = 'block';
                 
                 // Update chart
                 updateChart();
                 
-                console.log(`Loaded example: ${exampleName}`);
+                console.log(`Successfully loaded example: ${exampleName}`);
             } else {
+                console.error('API returned error:', data.error);
                 showError(data.error || 'Failed to load example');
             }
         })
         .catch(error => {
             console.error('Error loading example:', error);
-            showError('Failed to load example');
+            showError(`Failed to load example: ${error.message}`);
         })
         .finally(() => {
             hideLoading();
@@ -348,11 +487,24 @@ function processPastedCSV(csvData) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            appState.sessionId = data.session_id;
-            appState.currentData = data.preview;
+            // For waveform and IEEE charts, add to datasets
+            if (['waveform', 'ieee'].includes(appState.currentChartType)) {
+                addDataset(data.session_id, appState.dataLabel, data.analysis);
+            } else {
+                // For FFT and histogram, replace current data
+                appState.sessionId = data.session_id;
+                appState.currentData = data.preview;
+            }
             
-            // Show visualization section
+            // Show visualization section and chart config
             elements.visualizationSection.style.display = 'block';
+            elements.chartConfigSection.style.display = 'block';
+            
+            // Display analysis results if available
+            if (data.analysis) {
+                displayAnalysisResults(data.analysis);
+                elements.analysisResults.style.display = 'block';
+            }
             
             // Update chart
             updateChart();
@@ -477,22 +629,93 @@ function setupSlider(sliderId) {
     });
 }
 
+// Generate chart with multiple datasets
+function generateMultiDatasetChart() {
+    // For now, use the first dataset and show a message
+    if (appState.activeDatasets.length === 0) return;
+    
+    showLoading();
+    
+    // Prepare data for multiple datasets
+    const datasets = appState.activeDatasets.map(ds => ({
+        session_id: ds.sessionId,
+        label: ds.label
+    }));
+    
+    // Use first dataset as primary for now
+    const primaryDataset = appState.activeDatasets[0];
+    appState.sessionId = primaryDataset.sessionId;
+    appState.dataLabel = primaryDataset.label;
+    
+    // Note: This is a temporary implementation. 
+    // A proper multi-dataset endpoint would need to be created on the backend
+    // For now, we'll use the single dataset endpoint with the first dataset
+    
+    const config = { ...appState.chartSettings };
+    config.data_label = primaryDataset.label;
+    
+    if (appState.currentChartType === 'ieee' && appState.manualPoints.length > 0) {
+        config.manual_points = appState.manualPoints;
+    }
+    
+    fetch(`/api/chart/${appState.currentChartType}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            session_id: primaryDataset.sessionId,
+            config: config
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.chart && data.chart.image) {
+                elements.chartDisplay.innerHTML = `
+                    <div>
+                        <img src="${data.chart.image}" alt="Chart" style="max-width: 100%; height: auto;">
+                        ${appState.activeDatasets.length > 1 ? 
+                            '<p style="text-align: center; color: #666; margin-top: 10px;">Note: Currently showing only the first dataset. Multi-dataset support is coming soon.</p>' : 
+                            ''}
+                    </div>
+                `;
+            }
+        } else {
+            showError(data.error || 'Failed to generate chart');
+        }
+    })
+    .catch(error => {
+        console.error('Chart generation error:', error);
+        showError('Failed to generate chart');
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
 // Chart Generation
 function updateChart() {
+    // Handle multiple datasets for waveform and IEEE charts
+    if (['waveform', 'ieee'].includes(appState.currentChartType) && appState.activeDatasets.length > 0) {
+        generateMultiDatasetChart();
+        return;
+    }
+    
     // If IEEE chart and we have manual points but no session, use manual-only endpoint
-    if (appState.currentChartType === 'ieee' && appState.manualPoints.length > 0 && !appState.sessionId) {
+    if (appState.currentChartType === 'ieee' && appState.manualPoints.length > 0 && !appState.sessionId && appState.activeDatasets.length === 0) {
         generateManualOnlyIEEEChart();
         return;
     }
     
     // If IEEE chart with no manual points and no session, show message
-    if (appState.currentChartType === 'ieee' && appState.manualPoints.length === 0 && !appState.sessionId) {
-        elements.chartDisplay.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><p>Add manual points above to view IEEE 1789-2015 compliance chart</p></div>';
+    if (appState.currentChartType === 'ieee' && appState.manualPoints.length === 0 && !appState.sessionId && appState.activeDatasets.length === 0) {
+        elements.chartDisplay.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><p>Add manual points or load data to view IEEE 1789-2015 compliance chart</p></div>';
         return;
     }
     
     // If not IEEE chart and no session, show message to load data
-    if (!appState.sessionId) {
+    if (!appState.sessionId && appState.activeDatasets.length === 0) {
         elements.chartDisplay.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><p>Please load data or select an example to view charts</p></div>';
         return;
     }
@@ -504,6 +727,9 @@ function updateChart() {
     if (appState.currentChartType === 'ieee' && appState.manualPoints.length > 0) {
         config.manual_points = appState.manualPoints;
     }
+    
+    // Include data label for legend
+    config.data_label = appState.dataLabel;
     
     fetch(`/api/chart/${appState.currentChartType}`, {
         method: 'POST',
@@ -544,7 +770,8 @@ function generateManualOnlyIEEEChart() {
     
     const config = { 
         ...appState.chartSettings,
-        manual_points: appState.manualPoints 
+        manual_points: appState.manualPoints,
+        data_label: appState.dataLabel
     };
     
     fetch('/api/chart/ieee/manual', {

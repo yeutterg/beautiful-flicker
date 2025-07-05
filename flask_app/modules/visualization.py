@@ -113,7 +113,8 @@ class ChartGenerator:
         # Prepare data for IEEE plot
         freq = analysis['frequency']
         pct_flicker = analysis['percent_flicker'] / 100  # Convert to decimal
-        name = config.get('title', 'Measurement')
+        # Use data_label for legend, fallback to 'Measurement'
+        name = config.get('data_label', 'Measurement')
         
         # Create plot data list
         plot_data = [(freq, pct_flicker, name)]
@@ -525,7 +526,7 @@ class ChartGenerator:
         """Generate IEEE figure for export."""
         freq = analysis['frequency']
         pct_flicker = analysis['percent_flicker'] / 100
-        name = config.get('title', 'Measurement')
+        name = config.get('data_label', 'Measurement')
         
         # Create the IEEE plot manually to have better control
         fig, ax = plt.subplots(figsize=self._get_figsize(config))
@@ -542,6 +543,16 @@ class ChartGenerator:
         ax.set_ylabel('Modulation (%)', fontsize=config.get('axis_label_size', 12))
         ax.grid(which='both', alpha=0.3)
         ax.set_axisbelow(True)
+        
+        # Set custom tick labels for x-axis (1, 10, 100, 1000)
+        x_ticks = [1, 10, 100, 1000]
+        ax.set_xticks(x_ticks)
+        ax.set_xticklabels([str(tick) for tick in x_ticks])
+        
+        # Set custom tick labels for y-axis (0.1%, 1%, 10%, 100%)
+        y_ticks = [0.001, 0.01, 0.1, 1]
+        ax.set_yticks(y_ticks)
+        ax.set_yticklabels(['0.1%', '1%', '10%', '100%'])
         
         # Plot no risk region (green)
         norisk_region = [[1, min_pct], [1, 0.001], [10, 0.001], [100, 0.01], [100, 0.03], [3000, 1], 
@@ -666,6 +677,16 @@ class ChartGenerator:
         ax.set_ylabel('Modulation (%)', fontsize=config.get('axis_label_size', 12))
         ax.grid(which='both', alpha=0.3)
         ax.set_axisbelow(True)
+        
+        # Set custom tick labels for x-axis (1, 10, 100, 1000)
+        x_ticks = [1, 10, 100, 1000]
+        ax.set_xticks(x_ticks)
+        ax.set_xticklabels([str(tick) for tick in x_ticks])
+        
+        # Set custom tick labels for y-axis (0.1%, 1%, 10%, 100%)
+        y_ticks = [0.001, 0.01, 0.1, 1]
+        ax.set_yticks(y_ticks)
+        ax.set_yticklabels(['0.1%', '1%', '10%', '100%'])
         
         # Plot no risk region (green)
         norisk_region = [[1, min_pct], [1, 0.001], [10, 0.001], [100, 0.01], [100, 0.03], [3000, 1], 

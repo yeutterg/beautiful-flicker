@@ -4,325 +4,123 @@
 
 {% block content %}
 <div class="app-container">
-    <!-- Data Input Section -->
-    <section class="section data-input-section">
-        <h2 class="section-title">Data Input</h2>
-        
-        <!-- Data Input -->
-        <div class="input-section">
-            <div class="input-tabs">
-                <button class="input-tab active" data-tab="upload">Upload</button>
-                <button class="input-tab" data-tab="paste">Paste</button>
-                <button class="input-tab" data-tab="examples">Examples</button>
-                <button class="input-tab" data-tab="manual">Manual Points</button>
-            </div>
+    <!-- Left Column: Data Input and Analysis -->
+    <div class="left-column">
+        <!-- Data Input Section -->
+        <section class="section data-input-section">
+            <h2 class="section-title">Data Input</h2>
             
-            <!-- Upload Tab -->
-            <div class="input-content active" id="upload-content">
-                <div class="upload-area" id="upload-area">
-                    <div class="upload-icon">📁</div>
-                    <p>Drag and drop CSV file here or click to browse</p>
-                    <input type="file" id="file-input" accept=".csv,.txt" hidden>
-                </div>
-                <div class="form-group">
-                    <label for="upload-label" class="label">Data Label</label>
-                    <input type="text" id="upload-label" class="input" placeholder="e.g., LED Bulb Test" value="Uploaded Data">
-                </div>
-            </div>
-            
-            <!-- Paste Tab -->
-            <div class="input-content" id="paste-content">
-                <textarea id="csv-paste" class="textarea" placeholder="Paste CSV data here..."></textarea>
-                <div class="form-group">
-                    <label for="paste-label" class="label">Data Label</label>
-                    <input type="text" id="paste-label" class="input" placeholder="e.g., Measured Data" value="Pasted Data">
-                </div>
-                <button id="process-paste" class="btn btn-primary">Process Data</button>
-            </div>
-            
-            <!-- Examples Tab -->
-            <div class="input-content" id="examples-content">
-                <div class="form-group">
-                    <label for="example-select" class="label">Select Example Dataset</label>
-                    <select id="example-select" class="input">
-                        <option value="">Choose an example...</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="example-label" class="label">Data Label</label>
-                    <input type="text" id="example-label" class="input" placeholder="Custom label (leave blank for example name)">
-                </div>
-            </div>
-            
-            <!-- Manual Points Tab -->
-            <div class="input-content" id="manual-content">
-                <div class="manual-entry-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="manual-frequency" class="label">Frequency (Hz)</label>
-                            <input type="number" id="manual-frequency" class="input" min="1" max="10000" step="0.1" placeholder="e.g., 120">
-                        </div>
-                        <div class="form-group">
-                            <label for="manual-modulation" class="label">Modulation (%)</label>
-                            <input type="number" id="manual-modulation" class="input" min="0.01" max="100" step="0.01" placeholder="e.g., 5.0">
-                        </div>
-                        <div class="form-group">
-                            <label for="manual-label" class="label">Label</label>
-                            <input type="text" id="manual-label" class="input" placeholder="e.g., LED Test Point">
-                        </div>
-                    </div>
-                    <button id="add-manual-point" class="btn btn-primary">Add Point</button>
+            <!-- Data Input -->
+            <div class="input-section">
+                <div class="input-tabs">
+                    <button class="input-tab active" data-tab="upload">Upload</button>
+                    <button class="input-tab" data-tab="paste">Paste</button>
+                    <button class="input-tab" data-tab="examples">Examples</button>
+                    <button class="input-tab" data-tab="manual">Manual Points</button>
                 </div>
                 
-                <div id="manual-points-list" class="manual-points-list" style="display: none;">
-                    <h3>Added Points</h3>
-                    <div id="manual-points-container"></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Data Preview -->
-        <div id="dataPreview" class="data-preview" style="display: none;">
-            <h3 class="preview-title">Data Preview</h3>
-            <div class="preview-stats">
-                <span class="stat-item">Total rows: <strong id="totalRows">0</strong></span>
-                <span class="stat-item">Duration: <strong id="duration">0</strong>s</span>
-                <span class="stat-item">Sample rate: <strong id="sampleRate">0</strong> Hz</span>
-            </div>
-            <div class="preview-table-container">
-                <table class="preview-table">
-                    <thead>
-                        <tr>
-                            <th>Time (s)</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="previewTableBody">
-                        <!-- Preview rows will be inserted here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Manual Entry Section -->
-    <section class="section manual-entry-section">
-        <h2 class="section-title">Manual Entry for IEEE Chart</h2>
-        
-        <div class="manual-entry-form">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="manual-frequency" class="label">Frequency (Hz)</label>
-                    <input type="number" id="manual-frequency" class="input" min="1" max="10000" step="0.1" placeholder="e.g., 120">
-                </div>
-                <div class="form-group">
-                    <label for="manual-modulation" class="label">Modulation (%)</label>
-                    <input type="number" id="manual-modulation" class="input" min="0.01" max="100" step="0.01" placeholder="e.g., 5.0">
-                </div>
-                <div class="form-group">
-                    <label for="manual-label" class="label">Label</label>
-                    <input type="text" id="manual-label" class="input" placeholder="e.g., LED Test Point">
-                </div>
-            </div>
-            <button id="add-manual-point" class="btn btn-primary">Add Point</button>
-        </div>
-        
-        <div id="manual-points-list" class="manual-points-list" style="display: none;">
-            <h3>Added Points</h3>
-            <div id="manual-points-container"></div>
-        </div>
-    </section>
-    
-    <!-- Chart Configuration Section -->
-    <section id="chartConfigSection" class="section chart-config-section" style="display: none;">
-        <h2 class="section-title">Chart Configuration</h2>
-        
-        <div class="config-grid">
-            <!-- Chart Configuration -->
-            <div class="config-section">
-                <h3 class="config-title">Chart Configuration</h3>
-                
-                <!-- Basic Settings -->
-                <div class="config-group">
-                    <h4 class="config-group-title">Basic Settings</h4>
-                    
-                    <div class="form-group">
-                        <label for="chart-title" class="label">Chart Title</label>
-                        <input type="text" id="chart-title" class="input" placeholder="Enter chart title">
+                <!-- Upload Tab -->
+                <div class="input-content active" id="upload-content">
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-icon">📁</div>
+                        <p>Drag and drop CSV file here or click to browse</p>
+                        <input type="file" id="file-input" accept=".csv,.txt" hidden>
                     </div>
-                    
                     <div class="form-group">
-                        <label for="font-family" class="label">Font Family</label>
-                        <select id="font-family" class="input">
-                            <option value="Inter">Inter</option>
-                            <option value="Arial">Arial</option>
-                            <option value="Helvetica">Helvetica</option>
-                            <option value="Times New Roman">Times New Roman</option>
-                            <option value="Courier New">Courier New</option>
+                        <label for="upload-label" class="label">Data Label</label>
+                        <input type="text" id="upload-label" class="input" placeholder="e.g., LED Bulb Test" value="Uploaded Data">
+                    </div>
+                </div>
+                
+                <!-- Paste Tab -->
+                <div class="input-content" id="paste-content">
+                    <textarea id="csv-paste" class="textarea" placeholder="Paste CSV data here..."></textarea>
+                    <div class="form-group">
+                        <label for="paste-label" class="label">Data Label</label>
+                        <input type="text" id="paste-label" class="input" placeholder="e.g., Measured Data" value="Pasted Data">
+                    </div>
+                    <button id="process-paste" class="btn btn-primary">Process Data</button>
+                </div>
+                
+                <!-- Examples Tab -->
+                <div class="input-content" id="examples-content">
+                    <div class="form-group">
+                        <label for="example-select" class="label">Select Example Dataset</label>
+                        <select id="example-select" class="input">
+                            <option value="">Choose an example...</option>
                         </select>
                     </div>
-                </div>
-                
-                <!-- Font Sizes -->
-                <div class="config-group">
-                    <h4 class="config-group-title">Font Sizes</h4>
-                    
                     <div class="form-group">
-                        <label for="title-font-size" class="label">Title Font Size (pt)</label>
-                        <input type="number" id="title-font-size" class="input" min="8" max="72" value="16" step="1">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="axis-font-size" class="label">Axis Labels Font Size (pt)</label>
-                        <input type="number" id="axis-font-size" class="input" min="6" max="48" value="12" step="1">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="legend-font-size" class="label">Legend Font Size (pt)</label>
-                        <input type="number" id="legend-font-size" class="input" min="6" max="36" value="10" step="1">
+                        <label for="example-label" class="label">Data Label</label>
+                        <input type="text" id="example-label" class="input" placeholder="Custom label (leave blank for example name)">
                     </div>
                 </div>
                 
-                <!-- Chart Options -->
-                <div class="config-group">
-                    <h4 class="config-group-title">Chart Options</h4>
-                    
-                    <div class="form-group">
-                        <label class="label">
-                            <input type="checkbox" id="show-metrics" checked> Show Metrics Overlay
-                        </label>
+                <!-- Manual Points Tab -->
+                <div class="input-content" id="manual-content">
+                    <div class="manual-entry-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="manual-frequency" class="label">Frequency (Hz)</label>
+                                <input type="number" id="manual-frequency" class="input" min="1" max="10000" step="0.1" placeholder="e.g., 120">
+                            </div>
+                            <div class="form-group">
+                                <label for="manual-modulation" class="label">Modulation (%)</label>
+                                <input type="number" id="manual-modulation" class="input" min="0.01" max="100" step="0.01" placeholder="e.g., 5.0">
+                            </div>
+                            <div class="form-group">
+                                <label for="manual-label" class="label">Label</label>
+                                <input type="text" id="manual-label" class="input" placeholder="e.g., LED Test Point">
+                            </div>
+                        </div>
+                        <button id="add-manual-point" class="btn btn-primary">Add Point</button>
                     </div>
                     
-                    <div class="form-group">
-                        <label class="label">
-                            <input type="checkbox" id="show-standards" checked> Show Standards Overlay
-                        </label>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="label">
-                            <input type="checkbox" id="show-legend"> Show Legend
-                        </label>
-                    </div>
-                    
-                    <div class="form-group ieee-only" style="display: none;">
-                        <label for="legend-position" class="label">Legend Position</label>
-                        <select id="legend-position" class="input">
-                            <option value="upper left" selected>Top Left</option>
-                            <option value="upper right">Top Right</option>
-                            <option value="lower left">Bottom Left</option>
-                            <option value="lower right">Bottom Right</option>
-                            <option value="center left">Center Left</option>
-                            <option value="center right">Center Right</option>
-                            <option value="upper center">Top Center</option>
-                            <option value="lower center">Bottom Center</option>
-                            <option value="center">Center</option>
-                            <option value="best">Auto (Best Fit)</option>
-                        </select>
+                    <div id="manual-points-list" class="manual-points-list" style="display: none;">
+                        <h3>Added Points</h3>
+                        <div id="manual-points-container"></div>
                     </div>
                 </div>
-                
-                <!-- Export Configuration -->
-                <div class="config-group">
-                    <h4 class="config-group-title">Export Configuration</h4>
-                    
-                    <div class="form-group">
-                        <label for="chart-format" class="label">Export Format</label>
-                        <select id="chart-format" class="input">
-                            <option value="png">PNG</option>
-                            <option value="svg">SVG</option>
-                            <option value="pdf">PDF</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="resolution-type" class="label">Resolution Type</label>
-                        <select id="resolution-type" class="input">
-                            <option value="dpi">DPI (Inches)</option>
-                            <option value="pixels">Pixels</option>
-                        </select>
-                    </div>
-                    
-                    <!-- DPI Settings -->
-                    <div id="dpi-settings">
-                        <div class="form-group">
-                            <label for="chart-dpi" class="label">Resolution (DPI)</label>
-                            <select id="chart-dpi" class="input">
-                                <option value="72">72 DPI (Screen)</option>
-                                <option value="150">150 DPI (Web)</option>
-                                <option value="300" selected>300 DPI (Print)</option>
-                                <option value="600">600 DPI (High Quality)</option>
-                                <option value="custom">Custom</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group" id="custom-dpi-group" style="display: none;">
-                            <label for="custom-dpi" class="label">Custom DPI</label>
-                            <input type="number" id="custom-dpi" class="input" min="50" max="1200" value="300">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="chart-width" class="label">Width (inches)</label>
-                            <input type="number" id="chart-width" class="input" min="2" max="20" step="0.1" value="10">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="chart-height" class="label">Height (inches)</label>
-                            <input type="number" id="chart-height" class="input" min="2" max="20" step="0.1" value="6">
-                        </div>
-                    </div>
-                    
-                    <!-- Pixel Settings -->
-                    <div id="pixel-settings" style="display: none;">
-                        <div class="form-group">
-                            <label for="chart-width-px" class="label">Width (pixels)</label>
-                            <input type="number" id="chart-width-px" class="input" min="200" max="4000" value="1200">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="chart-height-px" class="label">Height (pixels)</label>
-                            <input type="number" id="chart-height-px" class="input" min="200" max="4000" value="800">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="label">
-                            <input type="checkbox" id="aspect-ratio-lock" checked> Lock Aspect Ratio
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Visualization Section -->
-    <section id="visualizationSection" class="section visualization-section" style="display: none;">
-        <h2 class="section-title">Visualization</h2>
-        
-        <!-- Chart Type Selector -->
-        <div class="chart-type-selector">
-            <button class="chart-type-btn active" data-chart-type="waveform">Waveform</button>
-            <button class="chart-type-btn" data-chart-type="ieee">IEEE 1789-2015</button>
-            <button class="chart-type-btn" data-chart-type="fft">FFT Spectrum</button>
-            <button class="chart-type-btn" data-chart-type="histogram">Distribution</button>
-        </div>
-        
-        <!-- Chart Display Area -->
-        <div class="chart-container">
-            <div id="chartDisplay" class="chart-display">
-                <!-- Chart will be rendered here -->
             </div>
             
-            <!-- Chart Controls -->
-            <div class="chart-controls">
-                <button id="resetZoom" class="btn btn-small">Reset Zoom</button>
-                <button id="fullscreen" class="btn btn-small">Fullscreen</button>
+            <!-- Data Preview -->
+            <div id="dataPreview" class="data-preview" style="display: none;">
+                <h3 class="preview-title">Data Preview</h3>
+                <div class="preview-stats">
+                    <span class="stat-item">Total rows: <strong id="totalRows">0</strong></span>
+                    <span class="stat-item">Duration: <strong id="duration">0</strong>s</span>
+                    <span class="stat-item">Sample rate: <strong id="sampleRate">0</strong> Hz</span>
+                </div>
+                <div class="preview-table-container">
+                    <table class="preview-table">
+                        <thead>
+                            <tr>
+                                <th>Time (s)</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewTableBody">
+                            <!-- Preview rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        </section>
+        
+        <!-- Active Datasets -->
+        <section id="activeDatasetsSection" class="section active-datasets-section" style="display: none;">
+            <h2 class="section-title">Active Datasets</h2>
+            <div id="datasetsList" class="datasets-list">
+                <!-- Active datasets will be listed here -->
+            </div>
+            <div class="dataset-controls">
+                <button id="clearAllDatasets" class="btn btn-secondary">Clear All</button>
+            </div>
+        </section>
         
         <!-- Analysis Results -->
-        <div id="analysisResults" class="analysis-results">
-            <h3 class="results-title">Analysis Results</h3>
+        <section id="analysisResults" class="section analysis-results" style="display: none;">
+            <h2 class="section-title">Analysis Results</h2>
             <div class="results-grid">
                 <div class="result-card">
                     <h4>Flicker Metrics</h4>
@@ -349,88 +147,203 @@
                     </dl>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </div>
     
-    <!-- Export Section -->
-    <section id="exportSection" class="section export-section" style="display: none;">
-        <h2 class="section-title">Export Options</h2>
-        
-        <div class="export-grid">
-            <!-- Format Selection -->
-            <div class="export-group">
-                <h3 class="export-group-title">Export Format</h3>
-                <div class="format-buttons">
-                    <button class="format-btn active" data-format="png">PNG</button>
-                    <button class="format-btn" data-format="svg">SVG</button>
-                    <button class="format-btn" data-format="pdf">PDF</button>
+    <!-- Right Column: Visualization and Controls -->
+    <div class="right-column">
+        <!-- Visualization Section -->
+        <section id="visualizationSection" class="section visualization-section" style="display: none;">
+            <h2 class="section-title">Visualization</h2>
+            
+            <!-- Chart Type Selector -->
+            <div class="chart-type-selector">
+                <button class="chart-type-btn active" data-chart-type="waveform">Waveform</button>
+                <button class="chart-type-btn" data-chart-type="ieee">IEEE 1789-2015</button>
+                <button class="chart-type-btn" data-chart-type="fft">FFT Spectrum</button>
+                <button class="chart-type-btn" data-chart-type="histogram">Distribution</button>
+            </div>
+            
+            <!-- Chart Display Area -->
+            <div class="chart-container">
+                <div id="chartDisplay" class="chart-display">
+                    <!-- Chart will be rendered here -->
                 </div>
                 
-                <div class="format-options">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="transparentBg" class="checkbox">
-                        <span>Transparent Background</span>
-                    </label>
+                <!-- Chart Controls -->
+                <div class="chart-controls">
+                    <button id="resetZoom" class="btn btn-small">Reset Zoom</button>
+                    <button id="fullscreen" class="btn btn-small">Fullscreen</button>
                 </div>
             </div>
             
-            <!-- Export Configuration -->
-            <div class="export-group">
-                <h3 class="export-group-title">Export Settings</h3>
+            <!-- Chart Configuration and Export (Merged) -->
+            <div id="chartConfigSection" class="chart-config-container">
+                <h3 class="config-title">Chart Configuration & Export</h3>
                 
-                <div class="form-group">
-                    <label class="label">Resolution</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="resolution" value="72" class="radio">
-                            <span>Screen (72 DPI)</span>
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="resolution" value="300" class="radio" checked>
-                            <span>Print (300 DPI)</span>
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="resolution" value="custom" class="radio">
-                            <span>Custom: <input type="number" id="customDPI" class="input-inline" value="150" min="72" max="600"> DPI</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="label">Size Preset</label>
-                    <select id="sizePreset" class="select">
-                        <option value="auto">Auto (fit content)</option>
-                        <option value="letter">Letter (8.5" × 11")</option>
-                        <option value="a4">A4 (210mm × 297mm)</option>
-                        <option value="custom">Custom</option>
-                    </select>
-                </div>
-                
-                <div id="customSize" class="custom-size" style="display: none;">
-                    <div class="size-inputs">
+                <div class="config-grid">
+                    <!-- Basic Settings -->
+                    <div class="config-group">
+                        <h4 class="config-group-title">Basic Settings</h4>
+                        
                         <div class="form-group">
-                            <label for="customWidth" class="label">Width</label>
-                            <input type="number" id="customWidth" class="input" value="10" min="1" max="50">
-                            <select id="widthUnit" class="select-small">
-                                <option value="in">inches</option>
-                                <option value="cm">cm</option>
-                            </select>
+                            <label for="chart-title" class="label">Chart Title</label>
+                            <input type="text" id="chart-title" class="input" placeholder="Enter chart title">
                         </div>
+                        
                         <div class="form-group">
-                            <label for="customHeight" class="label">Height</label>
-                            <input type="number" id="customHeight" class="input" value="6" min="1" max="50">
-                            <select id="heightUnit" class="select-small">
-                                <option value="in">inches</option>
-                                <option value="cm">cm</option>
+                            <label for="font-family" class="label">Font Family</label>
+                            <select id="font-family" class="input">
+                                <option value="Inter">Inter</option>
+                                <option value="Arial">Arial</option>
+                                <option value="Helvetica">Helvetica</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="Courier New">Courier New</option>
                             </select>
                         </div>
                     </div>
+                    
+                    <!-- Font Sizes -->
+                    <div class="config-group">
+                        <h4 class="config-group-title">Font Sizes</h4>
+                        
+                        <div class="form-group">
+                            <label for="title-font-size" class="label">Title Font Size (pt)</label>
+                            <input type="number" id="title-font-size" class="input" min="8" max="72" value="16" step="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="axis-font-size" class="label">Axis Labels Font Size (pt)</label>
+                            <input type="number" id="axis-font-size" class="input" min="6" max="48" value="12" step="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="legend-font-size" class="label">Legend Font Size (pt)</label>
+                            <input type="number" id="legend-font-size" class="input" min="6" max="36" value="10" step="1">
+                        </div>
+                    </div>
+                    
+                    <!-- Chart Options -->
+                    <div class="config-group">
+                        <h4 class="config-group-title">Chart Options</h4>
+                        
+                        <div class="form-group waveform-only" style="display: none;">
+                            <label class="label">
+                                <input type="checkbox" id="show-metrics" checked> Show Metrics Overlay
+                            </label>
+                        </div>
+                        
+                        <div class="form-group ieee-only" style="display: none;">
+                            <label class="label">
+                                <input type="checkbox" id="show-standards" checked> Show Standards Overlay
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="label">
+                                <input type="checkbox" id="show-legend" checked> Show Legend
+                            </label>
+                        </div>
+                        
+                        <div class="form-group ieee-only" style="display: none;">
+                            <label for="legend-position" class="label">Legend Position</label>
+                            <select id="legend-position" class="input">
+                                <option value="upper left" selected>Top Left</option>
+                                <option value="upper right">Top Right</option>
+                                <option value="lower left">Bottom Left</option>
+                                <option value="lower right">Bottom Right</option>
+                                <option value="center left">Center Left</option>
+                                <option value="center right">Center Right</option>
+                                <option value="upper center">Top Center</option>
+                                <option value="lower center">Bottom Center</option>
+                                <option value="center">Center</option>
+                                <option value="best">Auto (Best Fit)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Export Configuration -->
+                    <div class="config-group">
+                        <h4 class="config-group-title">Export Configuration</h4>
+                        
+                        <div class="form-group">
+                            <label for="chart-format" class="label">Export Format</label>
+                            <select id="chart-format" class="input">
+                                <option value="png">PNG</option>
+                                <option value="svg">SVG</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="label">
+                                <input type="checkbox" id="transparentBg" class="checkbox">
+                                <span>Transparent Background</span>
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="resolution-type" class="label">Resolution Type</label>
+                            <select id="resolution-type" class="input">
+                                <option value="dpi">DPI (Inches)</option>
+                                <option value="pixels">Pixels</option>
+                            </select>
+                        </div>
+                        
+                        <!-- DPI Settings -->
+                        <div id="dpi-settings">
+                            <div class="form-group">
+                                <label for="chart-dpi" class="label">Resolution (DPI)</label>
+                                <select id="chart-dpi" class="input">
+                                    <option value="72">72 DPI (Screen)</option>
+                                    <option value="150">150 DPI (Web)</option>
+                                    <option value="300" selected>300 DPI (Print)</option>
+                                    <option value="600">600 DPI (High Quality)</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" id="custom-dpi-group" style="display: none;">
+                                <label for="custom-dpi" class="label">Custom DPI</label>
+                                <input type="number" id="custom-dpi" class="input" min="50" max="1200" value="300">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="chart-width" class="label">Width (inches)</label>
+                                <input type="number" id="chart-width" class="input" min="2" max="20" step="0.1" value="10">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="chart-height" class="label">Height (inches)</label>
+                                <input type="number" id="chart-height" class="input" min="2" max="20" step="0.1" value="6">
+                            </div>
+                        </div>
+                        
+                        <!-- Pixel Settings -->
+                        <div id="pixel-settings" style="display: none;">
+                            <div class="form-group">
+                                <label for="chart-width-px" class="label">Width (pixels)</label>
+                                <input type="number" id="chart-width-px" class="input" min="200" max="4000" value="1200">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="chart-height-px" class="label">Height (pixels)</label>
+                                <input type="number" id="chart-height-px" class="input" min="200" max="4000" value="800">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="label">
+                                <input type="checkbox" id="aspect-ratio-lock" checked> Lock Aspect Ratio
+                            </label>
+                        </div>
+                        
+                        <button id="exportChart" class="btn btn-primary btn-large">Export Chart</button>
+                    </div>
                 </div>
-                
-                <button id="exportChart" class="btn btn-primary btn-large">Export Chart</button>
             </div>
-        </div>
-    </section>
+        </section>
+    </div>
 </div>
 
 <!-- Loading Overlay -->
