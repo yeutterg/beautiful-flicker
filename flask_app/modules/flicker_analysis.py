@@ -169,154 +169,181 @@ class FlickerAnalyzer:
         return (rms / mean_val) * 100
     
     def _detect_flicker_frequency(self, data: np.ndarray, framerate: int) -> float:
-        """Detect flicker frequency using multiple methods for robustness.
+        """Detect fundamental flicker frequency using improved signal processing.
         
         Args:
             data: 2D numpy array with columns [time, voltage]
             framerate: Sample rate in Hz
             
         Returns:
-            Detected frequency in Hz
+            Detected fundamental frequency in Hz
         """
         try:
             values = data[:, 1]
             
-            # Method 1: FFT-based frequency detection
-            fft_freq = self._fft_frequency_detection(values, framerate)
+            # Step 1: Preprocessing and cleaning
+            cleaned_values = self._preprocess_signal(values)
             
-            # Method 2: Autocorrelation-based detection
-            autocorr_freq = self._autocorrelation_frequency_detection(values, framerate)
+            # Step 2: Multiple detection methods focusing on fundamental frequency
+            fft_freq = self._improved_fft_fundamental_detection(cleaned_values, framerate)
+            autocorr_freq = self._improved_autocorrelation_detection(cleaned_values, framerate)
+            zero_cross_freq = self._improved_zero_crossing_detection(cleaned_values, framerate)
             
-            # Method 3: Envelope detection for high sample rate data
-            envelope_freq = self._envelope_frequency_detection(values, framerate)
-            
-            # Choose the best frequency based on consistency and expected ranges
-            candidates = [fft_freq, autocorr_freq, envelope_freq]
-            candidates = [f for f in candidates if f is not None and 10 <= f <= 2000]
+            # Step 3: Harmonic analysis to find true fundamental
+            candidates = [f for f in [fft_freq, autocorr_freq, zero_cross_freq] if f is not None]
             
             if not candidates:
-                # Fallback to zero-crossing method
-                return self._zero_crossing_frequency(values, framerate)
+                return 120.0  # Default fallback
             
-            # Return the median of valid candidates (more robust than mean)
-            return np.median(candidates)
+            # Find the fundamental frequency among candidates
+            fundamental_freq = self._find_fundamental_frequency(candidates)
+            
+            print(f"Frequency detection - FFT: {fft_freq}, Autocorr: {autocorr_freq}, ZeroCross: {zero_cross_freq}, Final: {fundamental_freq}")
+            
+            return fundamental_freq
             
         except Exception as e:
             print(f"Frequency detection error: {e}")
-            # Fallback to zero-crossing method
-            return self._zero_crossing_frequency(values, framerate)
+            return 120.0  # Default fallback
     
-    def _fft_frequency_detection(self, values: np.ndarray, framerate: int) -> float:
-        """Detect frequency using FFT analysis."""
+    def _preprocess_signal(self, values: np.ndarray) -> np.ndarray:
+        """Preprocess signal to remove noise and outliers."""
         try:
-            # Remove DC component and apply window
-            values_centered = values - np.mean(values)
+            from scipy.signal import savgol_filter, medfilt
             
-            # Apply Hanning window to reduce spectral leakage
-            window = np.hanning(len(values_centered))
-            values_windowed = values_centered * window
+            # Remove outliers using median filter
+            values_filtered = medfilt(values, kernel_size=5)
+            
+            # Remove DC component
+            values_centered = values_filtered - np.mean(values_filtered)
+            
+            # Apply Savitzky-Golay filter for smoothing while preserving peaks
+            if len(values_centered) > 50:
+                window_length = min(51, len(values_centered) // 10)
+                if window_length % 2 == 0:
+                    window_length += 1
+                values_smooth = savgol_filter(values_centered, window_length, 3)
+            else:
+                values_smooth = values_centered
+            
+            # Normalize to unit variance
+            std_val = np.std(values_smooth)
+            if std_val > 0:
+                values_smooth = values_smooth / std_val
+            
+            return values_smooth
+            
+        except Exception:
+            # Fallback to simple preprocessing
+            values_centered = values - np.mean(values)
+            std_val = np.std(values_centered)
+            if std_val > 0:
+                values_centered = values_centered / std_val
+            return values_centered
+    
+    def _improved_fft_fundamental_detection(self, values: np.ndarray, framerate: int) -> float:
+        """Detect fundamental frequency using improved FFT analysis."""
+        try:
+            # Apply window function to reduce spectral leakage
+            window = np.hanning(len(values))
+            values_windowed = values * window
+            
+            # Zero-padding for better frequency resolution
+            n_fft = max(2048, 2**int(np.ceil(np.log2(len(values)))))
             
             # Perform FFT
-            fft_vals = np.fft.fft(values_windowed)
-            fft_freqs = np.fft.fftfreq(len(values_windowed), 1/framerate)
+            fft_vals = np.fft.fft(values_windowed, n_fft)
+            fft_freqs = np.fft.fftfreq(n_fft, 1/framerate)
             
             # Get positive frequencies only
             positive_mask = fft_freqs > 0
             freqs = fft_freqs[positive_mask]
             magnitudes = np.abs(fft_vals[positive_mask])
             
-            # Focus on lighting frequency range (10-2000 Hz)
-            freq_mask = (freqs >= 10) & (freqs <= 2000)
+            # Focus on lighting frequency range (10-1000 Hz)
+            freq_mask = (freqs >= 10) & (freqs <= 1000)
             freqs = freqs[freq_mask]
             magnitudes = magnitudes[freq_mask]
             
             if len(freqs) == 0:
                 return None
             
-            # Find peak frequency
-            peak_idx = np.argmax(magnitudes)
-            peak_freq = freqs[peak_idx]
+            # Find peaks in the spectrum
+            from scipy.signal import find_peaks
             
-            # Validate that it's a significant peak
-            if magnitudes[peak_idx] > 0.1 * np.max(magnitudes):
-                return float(peak_freq)
+            # Normalize magnitudes
+            magnitudes_norm = magnitudes / np.max(magnitudes)
             
-            return None
+            # Find significant peaks (at least 10% of maximum)
+            peaks, properties = find_peaks(magnitudes_norm, height=0.1, distance=int(framerate/1000))
+            
+            if len(peaks) == 0:
+                # Fallback to simple peak finding
+                peak_idx = np.argmax(magnitudes_norm)
+                return float(freqs[peak_idx])
+            
+            # Get peak frequencies and their magnitudes
+            peak_freqs = freqs[peaks]
+            peak_mags = magnitudes_norm[peaks]
+            
+            # Sort by magnitude (strongest first)
+            sorted_indices = np.argsort(peak_mags)[::-1]
+            peak_freqs_sorted = peak_freqs[sorted_indices]
+            
+            # Look for fundamental frequency (lowest frequency that explains other peaks as harmonics)
+            for candidate_fundamental in peak_freqs_sorted:
+                if self._is_likely_fundamental(candidate_fundamental, peak_freqs_sorted):
+                    return float(candidate_fundamental)
+            
+            # If no clear fundamental found, return the strongest peak
+            return float(peak_freqs_sorted[0])
             
         except Exception:
             return None
     
-    def _autocorrelation_frequency_detection(self, values: np.ndarray, framerate: int) -> float:
-        """Detect frequency using autocorrelation."""
+    def _improved_autocorrelation_detection(self, values: np.ndarray, framerate: int) -> float:
+        """Improved autocorrelation-based frequency detection."""
         try:
-            # Remove DC component
-            values_centered = values - np.mean(values)
-            
-            # Calculate autocorrelation
-            autocorr = np.correlate(values_centered, values_centered, mode='full')
+            # Calculate normalized autocorrelation
+            values_norm = values - np.mean(values)
+            autocorr = np.correlate(values_norm, values_norm, mode='full')
             autocorr = autocorr[autocorr.size // 2:]
             
-            # Find peaks in autocorrelation (excluding the zero-lag peak)
-            min_period_samples = int(framerate / 2000)  # Max 2000 Hz
+            # Normalize autocorrelation
+            if autocorr[0] != 0:
+                autocorr = autocorr / autocorr[0]
+            
+            # Define search range for lighting frequencies
+            min_period_samples = int(framerate / 1000)  # Max 1000 Hz
             max_period_samples = int(framerate / 10)    # Min 10 Hz
             
             if max_period_samples >= len(autocorr):
-                return None
+                max_period_samples = len(autocorr) - 1
             
-            # Look for the first significant peak after the minimum period
+            # Find peaks in autocorrelation
             search_range = autocorr[min_period_samples:max_period_samples]
+            
             if len(search_range) == 0:
                 return None
             
-            # Find local maxima
-            peaks = []
-            for i in range(1, len(search_range) - 1):
-                if search_range[i] > search_range[i-1] and search_range[i] > search_range[i+1]:
-                    if search_range[i] > 0.1 * np.max(search_range):
-                        peaks.append(i + min_period_samples)
+            from scipy.signal import find_peaks
             
-            if peaks:
-                # Take the first significant peak
-                period_samples = peaks[0]
-                frequency = framerate / period_samples
-                return float(frequency)
+            # Find significant peaks
+            peaks, _ = find_peaks(search_range, height=0.1, distance=min_period_samples//2)
             
-            return None
+            if len(peaks) == 0:
+                # Fallback to maximum
+                peak_idx = np.argmax(search_range)
+                period_samples = peak_idx + min_period_samples
+            else:
+                # Take the first significant peak (shortest period = highest frequency)
+                peak_idx = peaks[0]
+                period_samples = peak_idx + min_period_samples
             
-        except Exception:
-            return None
-    
-    def _envelope_frequency_detection(self, values: np.ndarray, framerate: int) -> float:
-        """Detect frequency using envelope detection (useful for high sample rates)."""
-        try:
-            from scipy.signal import hilbert, find_peaks
-            
-            # Remove DC component
-            values_centered = values - np.mean(values)
-            
-            # Get envelope using Hilbert transform
-            analytic_signal = hilbert(values_centered)
-            envelope = np.abs(analytic_signal)
-            
-            # Remove trend from envelope
-            envelope_detrended = envelope - np.mean(envelope)
-            
-            # Find peaks in envelope
-            peaks, _ = find_peaks(envelope_detrended, height=0.1*np.std(envelope_detrended))
-            
-            if len(peaks) < 2:
-                return None
-            
-            # Calculate average period from peak spacing
-            peak_intervals = np.diff(peaks)
-            if len(peak_intervals) == 0:
-                return None
-            
-            avg_period_samples = np.median(peak_intervals)
-            frequency = framerate / avg_period_samples
+            frequency = framerate / period_samples
             
             # Validate frequency range
-            if 10 <= frequency <= 2000:
+            if 10 <= frequency <= 1000:
                 return float(frequency)
             
             return None
@@ -324,29 +351,93 @@ class FlickerAnalyzer:
         except Exception:
             return None
     
-    def _zero_crossing_frequency(self, values: np.ndarray, framerate: int) -> float:
-        """Fallback zero-crossing frequency detection (improved version)."""
+    def _improved_zero_crossing_detection(self, values: np.ndarray, framerate: int) -> float:
+        """Improved zero-crossing frequency detection."""
         try:
-            # Remove DC component
-            v_avg = np.mean(values)
-            values_centered = values - v_avg
-            
             # Find zero crossings
-            zero_crossings = np.where(np.diff(np.sign(values_centered)))[0]
+            zero_crossings = np.where(np.diff(np.sign(values)))[0]
             
-            if len(zero_crossings) < 2:
-                return 120.0  # Default fallback
+            if len(zero_crossings) < 4:  # Need at least 2 full cycles
+                return None
             
-            # Calculate frequency from zero crossings
+            # Calculate intervals between zero crossings
             crossing_intervals = np.diff(zero_crossings)
-            avg_half_period = np.median(crossing_intervals)
+            
+            # Remove outliers (intervals that are too different from median)
+            median_interval = np.median(crossing_intervals)
+            valid_intervals = crossing_intervals[
+                np.abs(crossing_intervals - median_interval) < 2 * np.std(crossing_intervals)
+            ]
+            
+            if len(valid_intervals) == 0:
+                return None
+            
+            # Calculate frequency from average half-period
+            avg_half_period = np.mean(valid_intervals)
             frequency = framerate / (2 * avg_half_period)
             
-            # Validate and return
-            if 10 <= frequency <= 2000:
+            # Validate frequency range
+            if 10 <= frequency <= 1000:
                 return float(frequency)
+            
+            return None
+            
+        except Exception:
+            return None
+    
+    def _is_likely_fundamental(self, candidate: float, all_peaks: np.ndarray) -> bool:
+        """Check if a candidate frequency is likely the fundamental frequency."""
+        try:
+            # Check if other peaks are harmonics of this candidate
+            harmonics_found = 0
+            expected_harmonics = [2, 3, 4, 5]  # Check first few harmonics
+            
+            for harmonic in expected_harmonics:
+                expected_freq = candidate * harmonic
+                # Look for peaks within 5% of expected harmonic frequency
+                tolerance = expected_freq * 0.05
+                harmonic_present = np.any(np.abs(all_peaks - expected_freq) < tolerance)
+                if harmonic_present:
+                    harmonics_found += 1
+            
+            # If we find at least one harmonic, this is likely the fundamental
+            return harmonics_found >= 1
+            
+        except Exception:
+            return True  # Default to accepting the candidate
+    
+    def _find_fundamental_frequency(self, candidates: list) -> float:
+        """Find the fundamental frequency from a list of candidates."""
+        try:
+            if len(candidates) == 1:
+                return candidates[0]
+            
+            # Remove obvious harmonics
+            candidates_sorted = sorted(candidates)
+            fundamental_candidates = []
+            
+            for freq in candidates_sorted:
+                # Check if this frequency is a harmonic of any lower frequency
+                is_harmonic = False
+                for lower_freq in fundamental_candidates:
+                    # Check if freq is approximately 2x, 3x, 4x, etc. of lower_freq
+                    for harmonic in [2, 3, 4, 5, 6]:
+                        expected = lower_freq * harmonic
+                        if abs(freq - expected) / expected < 0.1:  # Within 10%
+                            is_harmonic = True
+                            break
+                    if is_harmonic:
+                        break
+                
+                if not is_harmonic:
+                    fundamental_candidates.append(freq)
+            
+            if fundamental_candidates:
+                # Return the lowest frequency that's not a harmonic
+                return min(fundamental_candidates)
             else:
-                return 120.0  # Default fallback
+                # Fallback to lowest frequency
+                return min(candidates)
                 
         except Exception:
-            return 120.0  # Default fallback
+            return min(candidates) if candidates else 120.0
