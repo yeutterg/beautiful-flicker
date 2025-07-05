@@ -143,10 +143,11 @@ function setupEventListeners() {
             // Update current chart type
             appState.currentChartType = e.target.dataset.chartType;
             
-            // Update chart if we have data
-            if (appState.sessionId) {
-                updateChart();
-            }
+            // Show visualization section if not already visible
+            elements.visualizationSection.style.display = 'block';
+            
+            // Update chart
+            updateChart();
         });
     });
     
@@ -457,7 +458,17 @@ function updateChart() {
         return;
     }
     
-    if (!appState.sessionId) return;
+    // If IEEE chart with no manual points and no session, show message
+    if (appState.currentChartType === 'ieee' && appState.manualPoints.length === 0 && !appState.sessionId) {
+        elements.chartDisplay.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><p>Add manual points above to view IEEE 1789-2015 compliance chart</p></div>';
+        return;
+    }
+    
+    // If not IEEE chart and no session, show message to load data
+    if (!appState.sessionId) {
+        elements.chartDisplay.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><p>Please load data or select an example to view charts</p></div>';
+        return;
+    }
     
     showLoading();
     
@@ -671,6 +682,20 @@ function handleAddManualPoint() {
     
     // Update display
     updateManualPointsDisplay();
+    
+    // If this is the first manual point and no session data, automatically switch to IEEE chart
+    if (appState.manualPoints.length === 1 && !appState.sessionId) {
+        // Show visualization section
+        elements.visualizationSection.style.display = 'block';
+        
+        // Switch to IEEE chart
+        document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+        const ieeeBtn = document.querySelector('.chart-type-btn[data-chart-type="ieee"]');
+        if (ieeeBtn) {
+            ieeeBtn.classList.add('active');
+            appState.currentChartType = 'ieee';
+        }
+    }
     
     // If IEEE chart is currently active, update it (works with or without session data)
     if (appState.currentChartType === 'ieee') {
