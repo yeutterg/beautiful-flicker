@@ -617,34 +617,67 @@ class ChartGenerator:
         highrisk = plt.Polygon(highrisk_region, fc='red', alpha=0.2, label='High Risk')
         ax.add_patch(highrisk)
         
-        # Plot all data points
-        colors = ['blue', 'red', 'green', 'purple', 'orange', 'brown', 'pink', 'gray', 'olive', 'cyan']
-        markers = ['o', 's', '^', 'v', 'D', 'P', '*', 'X', 'h', '+']
+        # Plot all data points with distinct colors and markers
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+        
+        legend_elements = []
         
         for i, (freq, pct_flicker, name) in enumerate(plot_data):
             color = colors[i % len(colors)]
-            marker = markers[i % len(markers)]
             
-            # Use square markers for manual points, circles for data points
+            # Use different markers for manual points vs data points
             if 'Manual' in name or 'Point' in name:
                 marker = 's'  # Square for manual points
+                marker_size = 120
+                edge_width = 2
+                alpha = 0.9
             else:
                 marker = 'o'  # Circle for data points
+                marker_size = 100
+                edge_width = 2
+                alpha = 1.0
             
-            ax.scatter(freq, pct_flicker, color=color, s=100, marker=marker, 
-                      label=name, alpha=1, edgecolors='black', linewidth=2, zorder=5)
+            # Plot the point
+            scatter = ax.scatter(freq, pct_flicker, color=color, s=marker_size, marker=marker, 
+                               alpha=alpha, edgecolors='black', linewidth=edge_width, zorder=5)
+            
+            # Add to legend elements
+            legend_elements.append(plt.Line2D([0], [0], marker=marker, color='w', 
+                                            markerfacecolor=color, markersize=8, 
+                                            markeredgecolor='black', markeredgewidth=1,
+                                            label=f'{name} ({freq:.1f} Hz, {pct_flicker*100:.1f}%)',
+                                            linestyle='None'))
         
-        # Add legend
-        ax.legend(loc='upper right', fontsize=config.get('legend_size', 10))
+        # Create comprehensive legend with sections
+        # First add risk area legends
+        risk_legend_elements = [
+            plt.Rectangle((0,0),1,1, facecolor='green', alpha=0.3, label='No Risk'),
+            plt.Rectangle((0,0),1,1, facecolor='yellow', alpha=0.3, label='Low Risk'),
+            plt.Rectangle((0,0),1,1, facecolor='red', alpha=0.2, label='High Risk')
+        ]
+        
+        # Combine risk areas and data points
+        all_legend_elements = risk_legend_elements + legend_elements
+        
+        # Create legend with better positioning
+        legend = ax.legend(handles=all_legend_elements, loc='upper right', 
+                          fontsize=config.get('legend_size', 10),
+                          frameon=True, fancybox=True, shadow=True,
+                          bbox_to_anchor=(1.02, 1), borderaxespad=0)
+        
+        # Style the legend
+        legend.get_frame().set_facecolor('white')
+        legend.get_frame().set_alpha(0.9)
         
         # Add title if configured
-        if config.get('title'):
-            ax.set_title(config['title'], fontsize=config.get('title_size', 16), 
-                        fontweight='bold', pad=20)
+        title = config.get('title', 'IEEE PAR 1789-2015 Flicker Compliance')
+        ax.set_title(title, fontsize=config.get('title_size', 16), 
+                    fontweight='bold', pad=20)
         
         # Apply brutalist styling
         self._apply_brutalist_style(fig, ax)
         
+        # Adjust layout to accommodate legend
         plt.tight_layout()
         
         return fig

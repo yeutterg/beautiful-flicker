@@ -131,13 +131,22 @@ function setupEventListeners() {
         });
     });
     
-    // Chart type selector
+    // Chart type switching
     document.querySelectorAll('.chart-type-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
+            // Remove active class from all buttons
             document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+            
+            // Add active class to clicked button
             e.target.classList.add('active');
+            
+            // Update current chart type
             appState.currentChartType = e.target.dataset.chartType;
-            updateChart();
+            
+            // Update chart if we have data
+            if (appState.sessionId) {
+                updateChart();
+            }
         });
     });
     
@@ -616,6 +625,11 @@ function handleAddManualPoint() {
     // Update display
     updateManualPointsDisplay();
     
+    // If IEEE chart is currently active, update it
+    if (appState.currentChartType === 'ieee' && appState.sessionId) {
+        updateChart();
+    }
+    
     console.log(`Added manual point: ${label} (${frequency} Hz, ${modulation}%)`);
 }
 
@@ -644,5 +658,11 @@ function updateManualPointsDisplay() {
 function removeManualPoint(pointId) {
     appState.manualPoints = appState.manualPoints.filter(p => p.id !== pointId);
     updateManualPointsDisplay();
+    
+    // If IEEE chart is currently active, update it
+    if (appState.currentChartType === 'ieee' && appState.sessionId) {
+        updateChart();
+    }
+    
     console.log('Manual point removed');
 }
