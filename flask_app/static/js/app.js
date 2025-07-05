@@ -46,7 +46,7 @@ const elements = {
     csvPaste: document.getElementById('csv-paste'),
     pasteLabel: document.getElementById('paste-label'),
     processPaste: document.getElementById('process-paste'),
-    examplesGrid: document.getElementById('examples-grid'),
+    exampleSelect: document.getElementById('example-select'),
     exampleLabel: document.getElementById('example-label'),
     
     // Input tabs
@@ -122,6 +122,9 @@ function setupEventListeners() {
     
     // CSV paste
     elements.processPaste.addEventListener('click', handlePasteData);
+    
+    // Example selection
+    elements.exampleSelect.addEventListener('change', handleExampleSelect);
     
     // Chart configuration
     elements.chartTitle.addEventListener('input', updateChartSettings);
@@ -268,7 +271,7 @@ function loadExamples() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                populateExamplesGrid(data.examples);
+                populateExamplesDropdown(data.examples);
             } else {
                 showError('Failed to load examples');
             }
@@ -279,29 +282,27 @@ function loadExamples() {
         });
 }
 
-function populateExamplesGrid(examples) {
-    elements.examplesGrid.innerHTML = '';
+function populateExamplesDropdown(examples) {
+    elements.exampleSelect.innerHTML = '<option value="">Choose an example...</option>';
     
     examples.forEach(example => {
-        const item = document.createElement('div');
-        item.className = 'example-item';
-        
+        const option = document.createElement('option');
         // Handle both string format and object format
         const exampleName = typeof example === 'string' ? example : example.name;
         const examplePath = typeof example === 'string' ? example : example.path;
         
-        item.innerHTML = `
-            <div class="example-name">${exampleName}</div>
-            <div class="example-description">Click to load</div>
-        `;
-        item.addEventListener('click', () => handleExampleSelect(examplePath));
-        elements.examplesGrid.appendChild(item);
+        option.value = examplePath;
+        option.textContent = exampleName;
+        elements.exampleSelect.appendChild(option);
     });
 }
 
-function handleExampleSelect(exampleName) {
-    appState.dataLabel = elements.exampleLabel.value || exampleName;
-    loadExample(exampleName);
+function handleExampleSelect() {
+    const selectedExample = elements.exampleSelect.value;
+    if (selectedExample) {
+        appState.dataLabel = elements.exampleLabel.value || selectedExample;
+        loadExample(selectedExample);
+    }
 }
 
 function loadExample(exampleName) {
@@ -843,8 +844,8 @@ function switchInputTab(tabName) {
         content.classList.toggle('active', content.id === `${tabName}-content`);
     });
     
-    // Load examples if switching to examples tab
-    if (tabName === 'examples' && !elements.examplesGrid.hasChildNodes()) {
+    // Load examples if switching to examples tab and dropdown is empty
+    if (tabName === 'examples' && elements.exampleSelect.children.length <= 1) {
         loadExamples();
     }
 }

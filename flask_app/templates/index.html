@@ -14,6 +14,7 @@
                 <button class="input-tab active" data-tab="upload">Upload</button>
                 <button class="input-tab" data-tab="paste">Paste</button>
                 <button class="input-tab" data-tab="examples">Examples</button>
+                <button class="input-tab" data-tab="manual">Manual Points</button>
             </div>
             
             <!-- Upload Tab -->
@@ -41,12 +42,41 @@
             
             <!-- Examples Tab -->
             <div class="input-content" id="examples-content">
-                <div class="examples-grid" id="examples-grid">
-                    <!-- Examples will be loaded here -->
+                <div class="form-group">
+                    <label for="example-select" class="label">Select Example Dataset</label>
+                    <select id="example-select" class="input">
+                        <option value="">Choose an example...</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="example-label" class="label">Data Label</label>
                     <input type="text" id="example-label" class="input" placeholder="Custom label (leave blank for example name)">
+                </div>
+            </div>
+            
+            <!-- Manual Points Tab -->
+            <div class="input-content" id="manual-content">
+                <div class="manual-entry-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="manual-frequency" class="label">Frequency (Hz)</label>
+                            <input type="number" id="manual-frequency" class="input" min="1" max="10000" step="0.1" placeholder="e.g., 120">
+                        </div>
+                        <div class="form-group">
+                            <label for="manual-modulation" class="label">Modulation (%)</label>
+                            <input type="number" id="manual-modulation" class="input" min="0.01" max="100" step="0.01" placeholder="e.g., 5.0">
+                        </div>
+                        <div class="form-group">
+                            <label for="manual-label" class="label">Label</label>
+                            <input type="text" id="manual-label" class="input" placeholder="e.g., LED Test Point">
+                        </div>
+                    </div>
+                    <button id="add-manual-point" class="btn btn-primary">Add Point</button>
+                </div>
+                
+                <div id="manual-points-list" class="manual-points-list" style="display: none;">
+                    <h3>Added Points</h3>
+                    <div id="manual-points-container"></div>
                 </div>
             </div>
         </div>
@@ -89,21 +119,16 @@
                     <label for="manual-modulation" class="label">Modulation (%)</label>
                     <input type="number" id="manual-modulation" class="input" min="0.01" max="100" step="0.01" placeholder="e.g., 5.0">
                 </div>
-            </div>
-            <div class="form-row">
                 <div class="form-group">
                     <label for="manual-label" class="label">Label</label>
-                    <input type="text" id="manual-label" class="input" placeholder="e.g., Test Point 1">
-                </div>
-                <div class="form-group">
-                    <button type="button" id="add-manual-point" class="btn btn-secondary">Add Point</button>
+                    <input type="text" id="manual-label" class="input" placeholder="e.g., LED Test Point">
                 </div>
             </div>
+            <button id="add-manual-point" class="btn btn-primary">Add Point</button>
         </div>
         
-        <!-- Manual Points List -->
-        <div id="manual-points-list" class="manual-points-list" style="display:none;">
-            <h3>Manual Points:</h3>
+        <div id="manual-points-list" class="manual-points-list" style="display: none;">
+            <h3>Added Points</h3>
             <div id="manual-points-container"></div>
         </div>
     </section>
