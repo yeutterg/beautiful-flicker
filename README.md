@@ -462,6 +462,104 @@ For custom versions and testing services: [gregyeutter@gmail.com](mailto:gregyeu
 - Brutalist design inspiration from restfullighting.com
 - IEEE, WELL, and California standards organizations
 
+## TODO / Future Improvements
+
+### Frequency Detection Enhancements
+
+#### Signal Preprocessing Improvements
+- **Band-pass Filtering**: Add Butterworth band-pass filter (5-2000 Hz) to remove very-low-frequency drift and high-frequency sensor noise before analysis
+- **Wavelet Denoising**: Implement PyWavelets-based denoising with soft thresholding on detail coefficients for cleaner edge preservation on extremely noisy traces
+- **Adaptive Window Length**: Make Savitzky-Golay window size dynamic based on rough FFT estimate (window ≈ 0.25 × framerate/f_estimated samples)
+
+#### Advanced Detection Methods
+- **Multi-resolution Spectral Analysis**: Run FFTs with different zero-padding factors, cluster persistent peaks, weight by spectral power for stronger fundamental isolation
+- **Hilbert Envelope Detection**: For high sample rate data (>20kHz), isolate envelope using Hilbert transform and analyze envelope modulation frequency
+- **Chirp/Sweep Tracking**: Add capability to track frequency changes over time for variable-frequency sources
+
+#### Validation and Benchmarking
+- **Synthetic Benchmark Suite**: Create test suite with pure sinusoids + noise (20dB SNR) to verify <0.5Hz error
+- **Harmonic Rejection Testing**: Test with synthetic signals containing strong harmonics (2×, 3× at -10dB) to ensure fundamental selection
+- **Real-world Validation**: Compare against oscilloscope or dedicated flicker meter measurements
+
+### User Interface Enhancements
+
+#### Advanced Chart Features
+- **Multi-dataset Comparison**: Allow overlay of multiple datasets on single IEEE chart with different markers/colors
+- **Zoom and Pan**: Add interactive zoom/pan capabilities to waveform and FFT charts
+- **Cursor Measurements**: Add crosshair cursors with frequency/amplitude readouts
+- **Export Presets**: Save/load chart configuration presets for different use cases
+
+#### Data Management
+- **Session Persistence**: Save analysis sessions to browser localStorage or server-side storage
+- **Batch Processing**: Upload and analyze multiple files simultaneously
+- **Data Export**: Export raw analysis data (frequency, modulation, etc.) to CSV/JSON
+- **Comparison Reports**: Generate side-by-side comparison reports for multiple light sources
+
+### Analysis Features
+
+#### Standards Compliance
+- **Additional Standards**: Add support for more lighting standards (ENERGY STAR, ANSI C78.377, etc.)
+- **Custom Thresholds**: Allow users to define custom flicker thresholds for specific applications
+- **Pass/Fail Reporting**: Generate detailed compliance reports with pass/fail status
+
+#### Advanced Metrics
+- **Temporal Light Artifacts (TLA)**: Implement TLA metrics according to CIE TN 006:2016
+- **Stroboscopic Effect**: Add stroboscopic effect visibility calculations
+- **Short-term Flicker (Pst)**: Implement IEC 61000-4-15 short-term flicker severity
+- **Spectral Analysis**: Add detailed harmonic analysis with THD calculations
+
+### Performance and Scalability
+
+#### Backend Improvements
+- **Async Processing**: Implement async analysis for large files to prevent UI blocking
+- **Caching**: Add Redis/Memcached for analysis result caching
+- **Database Integration**: Store analysis results in PostgreSQL for historical tracking
+- **API Rate Limiting**: Add rate limiting and authentication for production deployment
+
+#### Frontend Optimization
+- **Progressive Loading**: Stream large dataset visualization progressively
+- **Web Workers**: Move heavy computations to web workers for better UI responsiveness
+- **Lazy Loading**: Implement lazy loading for example datasets and charts
+
+### Development and Deployment
+
+#### Code Quality
+- **Type Hints**: Add comprehensive type hints to all Python modules
+- **Unit Tests**: Expand test coverage to >90% with pytest
+- **Integration Tests**: Add end-to-end tests for critical user workflows
+- **Documentation**: Add comprehensive API documentation with Sphinx
+
+#### DevOps
+- **CI/CD Pipeline**: Set up GitHub Actions for automated testing and deployment
+- **Monitoring**: Add application monitoring with Prometheus/Grafana
+- **Logging**: Implement structured logging with ELK stack integration
+- **Security**: Add security headers, CSRF protection, input validation
+
+### Mobile and Accessibility
+
+#### Responsive Design
+- **Mobile Optimization**: Optimize charts and UI for mobile devices
+- **Touch Interactions**: Add touch-friendly chart interactions
+- **Offline Mode**: Implement service worker for offline analysis capability
+
+#### Accessibility
+- **Screen Reader Support**: Add ARIA labels and screen reader compatibility
+- **Keyboard Navigation**: Ensure full keyboard navigation support
+- **High Contrast Mode**: Add high contrast theme for better visibility
+- **Color Blind Support**: Use color-blind friendly palettes and patterns
+
+### Research and Innovation
+
+#### Machine Learning
+- **Anomaly Detection**: ML-based detection of unusual flicker patterns
+- **Source Classification**: Automatic classification of light source types (LED, CFL, incandescent)
+- **Predictive Analysis**: Predict flicker behavior based on electrical characteristics
+
+#### Advanced Visualization
+- **3D Plotting**: Time-frequency-amplitude 3D visualizations
+- **Interactive Spectrograms**: Real-time spectrogram analysis
+- **AR/VR Integration**: Immersive data visualization for research applications
+
 ## Changelog
 
 ### v2.0.0 (2025)
