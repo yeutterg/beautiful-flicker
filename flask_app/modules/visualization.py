@@ -59,17 +59,21 @@ class ChartGenerator:
         # Configure axes
         ax.set_xlabel('Time (ms)', fontsize=config.get('axis_label_size', 12))
         ax.set_ylabel('Light Output', fontsize=config.get('axis_label_size', 12))
+        ax.set_xlim(0, time_ms[-1])
+        ax.set_ylim(0, 1)
+        
+        # Apply consistent font settings
+        self._apply_font_settings(ax, config)
         
         # Add title if configured
         if config.get('title'):
             ax.set_title(config['title'], fontsize=config.get('title_size', 16), 
                         fontweight='bold', pad=20)
         
-        # Add metrics overlay if enabled
+        # Add overlays if configured
         if config.get('show_metrics', True):
             self._add_metrics_overlay(ax, analysis)
         
-        # Add standards overlay if enabled
         if config.get('show_standards', True):
             self._add_standards_overlay(ax, analysis)
         
@@ -378,9 +382,21 @@ class ChartGenerator:
     
     def _get_figsize(self, config: Dict[str, Any]) -> Tuple[float, float]:
         """Get figure size from config or use defaults."""
-        width = config.get('width', 10)
-        height = config.get('height', 6)
-        return (width, height)
+        resolution_type = config.get('resolution_type', 'dpi')
+        
+        if resolution_type == 'pixels':
+            # Convert pixels to inches using DPI
+            dpi = config.get('export_dpi', 300)
+            width_px = config.get('width_px', 1200)
+            height_px = config.get('height_px', 800)
+            width = width_px / dpi
+            height = height_px / dpi
+            return (width, height)
+        else:
+            # Use inches directly
+            width = config.get('width', 10)
+            height = config.get('height', 6)
+            return (width, height)
     
     def _get_dpi(self, config: Dict[str, Any]) -> int:
         """Get DPI from config or use defaults."""
@@ -484,11 +500,17 @@ class ChartGenerator:
         # Configure axes and overlays
         ax.set_xlabel('Time (ms)', fontsize=config.get('axis_label_size', 12))
         ax.set_ylabel('Light Output', fontsize=config.get('axis_label_size', 12))
+        ax.set_xlim(0, time_ms[-1])
+        ax.set_ylim(0, 1)
         
         if config.get('title'):
             ax.set_title(config['title'], fontsize=config.get('title_size', 16), 
                         fontweight='bold', pad=20)
         
+        # Apply consistent font settings
+        self._apply_font_settings(ax, config)
+        
+        # Add overlays if configured
         if config.get('show_metrics', True):
             self._add_metrics_overlay(ax, analysis)
         
@@ -721,3 +743,23 @@ class ChartGenerator:
         plt.tight_layout()
         
         return fig
+    
+    def _apply_font_settings(self, ax, config: Dict[str, Any]):
+        """Apply consistent font settings to chart elements."""
+        font_family = config.get('font', 'Inter')
+        title_size = config.get('title_size', 16)
+        axis_size = config.get('axis_label_size', 12)
+        
+        # Set title font to match axis labels font family
+        if config.get('title'):
+            ax.set_title(config['title'], fontsize=title_size, 
+                        fontfamily=font_family, fontweight='normal', pad=20)
+        
+        # Set axis label fonts
+        ax.set_xlabel(ax.get_xlabel(), fontsize=axis_size, fontfamily=font_family)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=axis_size, fontfamily=font_family)
+        
+        # Set tick label fonts
+        ax.tick_params(labelsize=axis_size-2)
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontfamily(font_family)

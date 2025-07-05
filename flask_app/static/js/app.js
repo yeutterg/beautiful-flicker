@@ -8,12 +8,13 @@ const appState = {
     currentData: null,
     selectedDatasets: new Map(), // For multiple dataset selection
     manualPoints: [], // For manual entry points
+    dataLabel: 'Data', // Label for current dataset
     chartSettings: {
         title: '',
         font: 'Inter',
-        title_size: 24,
-        axis_label_size: 14,
-        legend_size: 12,
+        title_size: 16,
+        axis_label_size: 12,
+        legend_size: 10,
         show_metrics: true,
         show_standards: true,
         show_legend: false,
@@ -22,6 +23,9 @@ const appState = {
         export_dpi: 300,
         width: 10,
         height: 6,
+        width_px: 1200,
+        height_px: 800,
+        resolution_type: 'dpi',
         aspect_ratio_locked: true
     },
     exportSettings: {
@@ -35,49 +39,49 @@ const appState = {
 
 // DOM Elements
 const elements = {
-    // File upload
-    dropZone: document.getElementById('dropZone'),
-    fileInput: document.getElementById('fileInput'),
-    csvPaste: document.getElementById('csvPaste'),
-    processPastedData: document.getElementById('processPastedData'),
-    exampleSelect: document.getElementById('exampleSelect'),
+    // Data input
+    uploadArea: document.getElementById('upload-area'),
+    fileInput: document.getElementById('file-input'),
+    uploadLabel: document.getElementById('upload-label'),
+    csvPaste: document.getElementById('csv-paste'),
+    pasteLabel: document.getElementById('paste-label'),
+    processPaste: document.getElementById('process-paste'),
+    examplesGrid: document.getElementById('examples-grid'),
+    exampleLabel: document.getElementById('example-label'),
     
-    // Data preview
-    dataPreview: document.getElementById('dataPreview'),
-    totalRows: document.getElementById('totalRows'),
-    duration: document.getElementById('duration'),
-    sampleRate: document.getElementById('sampleRate'),
-    previewTableBody: document.getElementById('previewTableBody'),
+    // Input tabs
+    inputTabs: document.querySelectorAll('.input-tab'),
+    inputContents: document.querySelectorAll('.input-content'),
     
     // Chart configuration
-    chartConfigSection: document.getElementById('chartConfigSection'),
-    chartTitle: document.getElementById('chartTitle'),
-    fontSelect: document.getElementById('fontSelect'),
-    titleSize: document.getElementById('titleSize'),
-    axisLabelSize: document.getElementById('axisLabelSize'),
-    legendSize: document.getElementById('legendSize'),
-    showMetrics: document.getElementById('showMetrics'),
-    showStandards: document.getElementById('showStandards'),
-    showLegend: document.getElementById('showLegend'),
-    legendConfig: document.getElementById('legendConfig'),
+    chartTitle: document.getElementById('chart-title'),
+    fontFamily: document.getElementById('font-family'),
+    titleFontSize: document.getElementById('title-font-size'),
+    axisFontSize: document.getElementById('axis-font-size'),
+    legendFontSize: document.getElementById('legend-font-size'),
+    showMetrics: document.getElementById('show-metrics'),
+    showStandards: document.getElementById('show-standards'),
+    showLegend: document.getElementById('show-legend'),
+    legendPosition: document.getElementById('legend-position'),
+    
+    // Export configuration
+    chartFormat: document.getElementById('chart-format'),
+    resolutionType: document.getElementById('resolution-type'),
+    chartDpi: document.getElementById('chart-dpi'),
+    customDpi: document.getElementById('custom-dpi'),
+    customDpiGroup: document.getElementById('custom-dpi-group'),
+    dpiSettings: document.getElementById('dpi-settings'),
+    pixelSettings: document.getElementById('pixel-settings'),
+    chartWidth: document.getElementById('chart-width'),
+    chartHeight: document.getElementById('chart-height'),
+    chartWidthPx: document.getElementById('chart-width-px'),
+    chartHeightPx: document.getElementById('chart-height-px'),
+    aspectRatioLock: document.getElementById('aspect-ratio-lock'),
     
     // Visualization
-    visualizationSection: document.getElementById('visualizationSection'),
-    chartDisplay: document.getElementById('chartDisplay'),
-    analysisResults: document.getElementById('analysisResults'),
-    
-    // Export
-    exportSection: document.getElementById('exportSection'),
-    exportChart: document.getElementById('exportChart'),
-    transparentBg: document.getElementById('transparentBg'),
-    sizePreset: document.getElementById('sizePreset'),
-    customSize: document.getElementById('customSize'),
-    
-    // Loading and error
-    loadingOverlay: document.getElementById('loadingOverlay'),
-    errorModal: document.getElementById('errorModal'),
-    errorMessage: document.getElementById('errorMessage'),
-    closeError: document.getElementById('closeError'),
+    visualizationSection: document.getElementById('visualization-section'),
+    chartDisplay: document.getElementById('chart-display'),
+    loadingSpinner: document.getElementById('loading-spinner'),
     
     // Manual entry
     manualFrequency: document.getElementById('manual-frequency'),
@@ -87,15 +91,10 @@ const elements = {
     manualPointsList: document.getElementById('manual-points-list'),
     manualPointsContainer: document.getElementById('manual-points-container'),
     
-    // Chart configuration
-    chartFormat: document.getElementById('chart-format'),
-    chartDpi: document.getElementById('chart-dpi'),
-    customDpi: document.getElementById('custom-dpi'),
-    customDpiGroup: document.getElementById('custom-dpi-group'),
-    chartWidth: document.getElementById('chart-width'),
-    chartHeight: document.getElementById('chart-height'),
-    aspectRatioLock: document.getElementById('aspect-ratio-lock'),
-    legendPosition: document.getElementById('legend-position')
+    // Error modal
+    errorModal: document.getElementById('errorModal'),
+    errorMessage: document.getElementById('errorMessage'),
+    closeError: document.getElementById('closeError')
 };
 
 // Initialize application
@@ -106,43 +105,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Event Listeners Setup
 function setupEventListeners() {
-    // File upload
-    elements.dropZone.addEventListener('click', () => elements.fileInput.click());
-    elements.fileInput.addEventListener('change', handleFileSelect);
-    elements.dropZone.addEventListener('dragover', handleDragOver);
-    elements.dropZone.addEventListener('dragleave', handleDragLeave);
-    elements.dropZone.addEventListener('drop', handleDrop);
-    
-    // Paste CSV
-    elements.processPastedData.addEventListener('click', handlePastedData);
-    
-    // Example selection
-    elements.exampleSelect.addEventListener('change', handleExampleSelect);
-    
-    // Chart configuration
-    elements.chartTitle.addEventListener('input', updateChartConfig);
-    elements.fontSelect.addEventListener('change', updateChartConfig);
-    elements.showMetrics.addEventListener('change', updateChartConfig);
-    elements.showStandards.addEventListener('change', updateChartConfig);
-    elements.showLegend.addEventListener('change', () => {
-        updateChartConfig();
-        elements.legendConfig.style.display = elements.showLegend.checked ? 'block' : 'none';
-    });
-    
-    // Size sliders
-    setupSlider('titleSize');
-    setupSlider('axisLabelSize');
-    setupSlider('legendSize');
-    
-    // Legend position
-    document.querySelectorAll('.position-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.position-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            appState.chartSettings.legend_position = e.target.dataset.position;
-            updateChart();
+    // Input tabs
+    elements.inputTabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            const tabName = e.target.dataset.tab;
+            switchInputTab(tabName);
         });
     });
+    
+    // File upload
+    elements.uploadArea.addEventListener('click', () => elements.fileInput.click());
+    elements.uploadArea.addEventListener('dragover', handleDragOver);
+    elements.uploadArea.addEventListener('drop', handleDrop);
+    elements.fileInput.addEventListener('change', handleFileSelect);
+    
+    // CSV paste
+    elements.processPaste.addEventListener('click', handlePasteData);
+    
+    // Chart configuration
+    elements.chartTitle.addEventListener('input', updateChartSettings);
+    elements.fontFamily.addEventListener('change', updateChartSettings);
+    elements.titleFontSize.addEventListener('input', updateChartSettings);
+    elements.axisFontSize.addEventListener('input', updateChartSettings);
+    elements.legendFontSize.addEventListener('input', updateChartSettings);
+    elements.showMetrics.addEventListener('change', updateChartSettings);
+    elements.showStandards.addEventListener('change', updateChartSettings);
+    elements.showLegend.addEventListener('change', updateChartSettings);
+    elements.legendPosition.addEventListener('change', updateChartSettings);
+    
+    // Export configuration
+    elements.resolutionType.addEventListener('change', handleResolutionTypeChange);
+    elements.chartDpi.addEventListener('change', handleDpiChange);
+    elements.customDpi.addEventListener('input', updateChartSettings);
+    elements.chartWidth.addEventListener('input', handleDimensionChange);
+    elements.chartHeight.addEventListener('input', handleDimensionChange);
+    elements.chartWidthPx.addEventListener('input', handlePixelDimensionChange);
+    elements.chartHeightPx.addEventListener('input', handlePixelDimensionChange);
+    elements.aspectRatioLock.addEventListener('change', updateChartSettings);
+    elements.chartFormat.addEventListener('change', updateChartSettings);
     
     // Chart type switching
     document.querySelectorAll('.chart-type-btn').forEach(btn => {
@@ -170,45 +170,6 @@ function setupEventListeners() {
         });
     });
     
-    // Export format
-    document.querySelectorAll('.format-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            appState.exportSettings.format = e.target.dataset.format;
-        });
-    });
-    
-    // Export settings
-    elements.transparentBg.addEventListener('change', () => {
-        appState.exportSettings.transparent_bg = elements.transparentBg.checked;
-    });
-    
-    elements.sizePreset.addEventListener('change', () => {
-        appState.exportSettings.size_preset = elements.sizePreset.value;
-        elements.customSize.style.display = elements.sizePreset.value === 'custom' ? 'block' : 'none';
-    });
-    
-    // Resolution radio buttons
-    document.querySelectorAll('input[name="resolution"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            if (e.target.value === 'custom') {
-                appState.exportSettings.export_dpi = parseInt(document.getElementById('customDPI').value);
-            } else {
-                appState.exportSettings.export_dpi = parseInt(e.target.value);
-            }
-        });
-    });
-    
-    document.getElementById('customDPI').addEventListener('input', (e) => {
-        if (document.querySelector('input[name="resolution"]:checked').value === 'custom') {
-            appState.exportSettings.export_dpi = parseInt(e.target.value);
-        }
-    });
-    
-    // Export button
-    elements.exportChart.addEventListener('click', handleExport);
-    
     // Error modal
     elements.closeError.addEventListener('click', () => {
         elements.errorModal.style.display = 'none';
@@ -216,32 +177,13 @@ function setupEventListeners() {
     
     // Manual entry
     elements.addManualPoint.addEventListener('click', handleAddManualPoint);
-    
-    // Chart controls
-    document.getElementById('resetZoom').addEventListener('click', () => {
-        updateChart();
-    });
-    
-    document.getElementById('fullscreen').addEventListener('click', () => {
-        if (elements.chartDisplay.requestFullscreen) {
-            elements.chartDisplay.requestFullscreen();
-        }
-    });
-    
-    // Chart configuration
-    elements.chartDpi.addEventListener('change', handleDpiChange);
-    elements.customDpi.addEventListener('input', updateChartSettings);
-    elements.chartWidth.addEventListener('input', handleDimensionChange);
-    elements.chartHeight.addEventListener('input', handleDimensionChange);
-    elements.aspectRatioLock.addEventListener('change', updateChartSettings);
-    elements.legendPosition.addEventListener('change', updateChartSettings);
-    elements.chartFormat.addEventListener('change', updateChartSettings);
 }
 
 // File Handling
 function handleFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
+        appState.dataLabel = elements.uploadLabel.value || file.name.replace(/\.[^/.]+$/, "");
         processFile(file);
     }
 }
@@ -300,35 +242,14 @@ function processFile(file) {
 }
 
 // Pasted Data Handling
-function handlePastedData() {
+function handlePasteData() {
     const csvData = elements.csvPaste.value.trim();
-    if (!csvData) {
+    if (csvData) {
+        appState.dataLabel = elements.pasteLabel.value || 'Pasted Data';
+        processPastedCSV(csvData);
+    } else {
         showError('Please paste CSV data first');
-        return;
     }
-    
-    showLoading();
-    
-    fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ csv_data: csvData })
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideLoading();
-        if (data.success) {
-            handleUploadSuccess(data);
-        } else {
-            showError(data.error || 'Failed to process data');
-        }
-    })
-    .catch(error => {
-        hideLoading();
-        showError('Network error: ' + error.message);
-    });
 }
 
 // Example Handling
@@ -809,6 +730,14 @@ function handleDimensionChange(e) {
 
 function updateChartSettings() {
     // Update all chart settings from form elements
+    appState.chartSettings.title = elements.chartTitle.value;
+    appState.chartSettings.font = elements.fontFamily.value;
+    appState.chartSettings.title_size = parseInt(elements.titleFontSize.value);
+    appState.chartSettings.axis_label_size = parseInt(elements.axisFontSize.value);
+    appState.chartSettings.legend_size = parseInt(elements.legendFontSize.value);
+    appState.chartSettings.show_metrics = elements.showMetrics.checked;
+    appState.chartSettings.show_standards = elements.showStandards.checked;
+    appState.chartSettings.show_legend = elements.showLegend.checked;
     appState.chartSettings.legend_position = elements.legendPosition.value;
     appState.chartSettings.format = elements.chartFormat.value;
     appState.chartSettings.aspect_ratio_locked = elements.aspectRatioLock.checked;
@@ -816,6 +745,68 @@ function updateChartSettings() {
     // Update DPI if custom is selected
     if (elements.chartDpi.value === 'custom') {
         appState.chartSettings.export_dpi = parseInt(elements.customDpi.value);
+    }
+    
+    updateChart();
+}
+
+// Input tab switching
+function switchInputTab(tabName) {
+    // Update tab buttons
+    elements.inputTabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabName);
+    });
+    
+    // Update content visibility
+    elements.inputContents.forEach(content => {
+        content.classList.toggle('active', content.id === `${tabName}-content`);
+    });
+    
+    // Load examples if switching to examples tab
+    if (tabName === 'examples' && !elements.examplesGrid.hasChildNodes()) {
+        loadExamples();
+    }
+}
+
+// Resolution type switching
+function handleResolutionTypeChange() {
+    const resolutionType = elements.resolutionType.value;
+    appState.chartSettings.resolution_type = resolutionType;
+    
+    if (resolutionType === 'dpi') {
+        elements.dpiSettings.style.display = 'block';
+        elements.pixelSettings.style.display = 'none';
+    } else {
+        elements.dpiSettings.style.display = 'none';
+        elements.pixelSettings.style.display = 'block';
+    }
+    
+    updateChart();
+}
+
+// Pixel dimension handling
+function handlePixelDimensionChange(e) {
+    const isWidth = e.target.id === 'chart-width-px';
+    const newValue = parseInt(e.target.value);
+    
+    if (appState.chartSettings.aspect_ratio_locked) {
+        const currentRatio = appState.chartSettings.width_px / appState.chartSettings.height_px;
+        
+        if (isWidth) {
+            appState.chartSettings.width_px = newValue;
+            appState.chartSettings.height_px = Math.round(newValue / currentRatio);
+            elements.chartHeightPx.value = appState.chartSettings.height_px;
+        } else {
+            appState.chartSettings.height_px = newValue;
+            appState.chartSettings.width_px = Math.round(newValue * currentRatio);
+            elements.chartWidthPx.value = appState.chartSettings.width_px;
+        }
+    } else {
+        if (isWidth) {
+            appState.chartSettings.width_px = newValue;
+        } else {
+            appState.chartSettings.height_px = newValue;
+        }
     }
     
     updateChart();

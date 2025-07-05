@@ -863,3 +863,131 @@ body {
     background: var(--color-error);
     color: white;
 }
+
+/* Input Section */
+.input-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.input-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--color-border);
+    margin-bottom: var(--spacing-md);
+}
+
+.input-tab {
+    background: none;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.input-tab:hover {
+    color: var(--color-text);
+    background: var(--color-gray-light);
+}
+
+.input-tab.active {
+    color: var(--color-accent);
+    border-bottom-color: var(--color-accent);
+    background: var(--color-gray-light);
+}
+
+.input-content {
+    display: none;
+}
+
+.input-content.active {
+    display: block;
+}
+
+.upload-area {
+    border: 2px dashed var(--color-border);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-xl);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: var(--spacing-md);
+}
+
+.upload-area:hover {
+    border-color: var(--color-accent);
+    background: var(--color-gray-light);
+}
+
+.upload-icon {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.examples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.example-item {
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.example-item:hover {
+    border-color: var(--color-accent);
+    background: var(--color-gray-light);
+}
+
+.textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: var(--spacing-sm);
+    border: var(--border-width) var(--border-style) var(--color-border);
+    border-radius: var(--border-radius);
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    resize: vertical;
+    margin-bottom: var(--spacing-md);
+}
+
+/* Resolution Settings */
+#pixel-settings,
+#dpi-settings {
+    border-left: 3px solid var(--color-accent);
+    padding-left: var(--spacing-md);
+    margin-left: var(--spacing-sm);
+    background: rgba(0, 0, 0, 0.02);
+}
+
+/* Form improvements */
+.form-group label {
+    font-weight: 500;
+    margin-bottom: var(--spacing-xs);
+}
+
+.form-group input[type="number"] {
+    width: 100px;
+}
+
+.config-section {
+    background: var(--color-gray-light);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+}
+
+.config-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-text);
+    border-bottom: 2px solid var(--color-accent);
+    padding-bottom: var(--spacing-sm);
+}

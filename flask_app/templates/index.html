@@ -8,40 +8,45 @@
     <section class="section data-input-section">
         <h2 class="section-title">Data Input</h2>
         
-        <!-- File Upload Area -->
-        <div class="upload-container">
-            <div id="dropZone" class="drop-zone">
-                <div class="drop-zone-content">
-                    <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                    <p class="drop-zone-text">Drop CSV file here or click to browse</p>
-                    <p class="drop-zone-subtext">Maximum file size: 50MB</p>
-                    <input type="file" id="fileInput" accept=".csv,.txt" style="display: none;">
+        <!-- Data Input -->
+        <div class="input-section">
+            <div class="input-tabs">
+                <button class="input-tab active" data-tab="upload">Upload</button>
+                <button class="input-tab" data-tab="paste">Paste</button>
+                <button class="input-tab" data-tab="examples">Examples</button>
+            </div>
+            
+            <!-- Upload Tab -->
+            <div class="input-content active" id="upload-content">
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">📁</div>
+                    <p>Drag and drop CSV file here or click to browse</p>
+                    <input type="file" id="file-input" accept=".csv,.txt" hidden>
+                </div>
+                <div class="form-group">
+                    <label for="upload-label" class="label">Data Label</label>
+                    <input type="text" id="upload-label" class="input" placeholder="e.g., LED Bulb Test" value="Uploaded Data">
                 </div>
             </div>
             
-            <!-- Alternative Input Methods -->
-            <div class="input-alternatives">
-                <div class="divider">
-                    <span>OR</span>
+            <!-- Paste Tab -->
+            <div class="input-content" id="paste-content">
+                <textarea id="csv-paste" class="textarea" placeholder="Paste CSV data here..."></textarea>
+                <div class="form-group">
+                    <label for="paste-label" class="label">Data Label</label>
+                    <input type="text" id="paste-label" class="input" placeholder="e.g., Measured Data" value="Pasted Data">
                 </div>
-                
-                <!-- Paste CSV Data -->
-                <div class="paste-container">
-                    <label for="csvPaste" class="label">Paste CSV Data</label>
-                    <textarea id="csvPaste" class="textarea" placeholder="Time,Value&#10;0.000,0.95&#10;0.001,0.97&#10;..." rows="5"></textarea>
-                    <button id="processPastedData" class="btn btn-secondary">Process Pasted Data</button>
+                <button id="process-paste" class="btn btn-primary">Process Data</button>
+            </div>
+            
+            <!-- Examples Tab -->
+            <div class="input-content" id="examples-content">
+                <div class="examples-grid" id="examples-grid">
+                    <!-- Examples will be loaded here -->
                 </div>
-                
-                <!-- Example Selector -->
-                <div class="example-container">
-                    <label for="exampleSelect" class="label">Load Example Data</label>
-                    <select id="exampleSelect" class="select">
-                        <option value="">Select an example...</option>
-                    </select>
+                <div class="form-group">
+                    <label for="example-label" class="label">Data Label</label>
+                    <input type="text" id="example-label" class="input" placeholder="Custom label (leave blank for example name)">
                 </div>
             </div>
         </div>
@@ -108,143 +113,158 @@
         <h2 class="section-title">Chart Configuration</h2>
         
         <div class="config-grid">
-            <!-- Basic Settings -->
-            <div class="config-group">
-                <h3 class="config-group-title">Basic Settings</h3>
+            <!-- Chart Configuration -->
+            <div class="config-section">
+                <h3 class="config-title">Chart Configuration</h3>
                 
-                <div class="form-group">
-                    <label for="chartTitle" class="label">Chart Title</label>
-                    <input type="text" id="chartTitle" class="input" placeholder="Enter chart title">
-                </div>
-                
-                <div class="form-group">
-                    <label for="fontSelect" class="label">Font</label>
-                    <select id="fontSelect" class="select">
-                        <option value="Inter">Inter (default)</option>
-                        <option value="Helvetica Neue">Helvetica Neue</option>
-                        <option value="Arial">Arial</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Courier New">Courier New</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="label">Text Sizes</label>
-                    <div class="size-controls">
-                        <div class="size-control">
-                            <label for="titleSize">Title</label>
-                            <input type="range" id="titleSize" min="16" max="48" value="24" class="slider">
-                            <span class="size-value">24px</span>
-                        </div>
-                        <div class="size-control">
-                            <label for="axisLabelSize">Axis Labels</label>
-                            <input type="range" id="axisLabelSize" min="10" max="24" value="14" class="slider">
-                            <span class="size-value">14px</span>
-                        </div>
-                        <div class="size-control">
-                            <label for="legendSize">Legend</label>
-                            <input type="range" id="legendSize" min="10" max="20" value="12" class="slider">
-                            <span class="size-value">12px</span>
-                        </div>
+                <!-- Basic Settings -->
+                <div class="config-group">
+                    <h4 class="config-group-title">Basic Settings</h4>
+                    
+                    <div class="form-group">
+                        <label for="chart-title" class="label">Chart Title</label>
+                        <input type="text" id="chart-title" class="input" placeholder="Enter chart title">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="font-family" class="label">Font Family</label>
+                        <select id="font-family" class="input">
+                            <option value="Inter">Inter</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Helvetica">Helvetica</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                        </select>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Chart Overlays -->
-            <div class="config-group">
-                <h3 class="config-group-title">Chart Overlays</h3>
                 
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="showMetrics" class="checkbox" checked>
-                        <span>Show Flicker Metrics</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="showStandards" class="checkbox" checked>
-                        <span>Show Standards Compliance</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="showLegend" class="checkbox">
-                        <span>Show Legend</span>
-                    </label>
-                </div>
-                
-                <!-- Legend Configuration -->
-                <div id="legendConfig" class="legend-config" style="display: none;">
-                    <label class="label">Legend Position</label>
-                    <div class="position-grid">
-                        <button class="position-btn" data-position="top left">↖</button>
-                        <button class="position-btn" data-position="top center">↑</button>
-                        <button class="position-btn active" data-position="top right">↗</button>
-                        <button class="position-btn" data-position="middle left">←</button>
-                        <button class="position-btn" data-position="center" disabled>·</button>
-                        <button class="position-btn" data-position="middle right">→</button>
-                        <button class="position-btn" data-position="bottom left">↙</button>
-                        <button class="position-btn" data-position="bottom center">↓</button>
-                        <button class="position-btn" data-position="bottom right">↘</button>
+                <!-- Font Sizes -->
+                <div class="config-group">
+                    <h4 class="config-group-title">Font Sizes</h4>
+                    
+                    <div class="form-group">
+                        <label for="title-font-size" class="label">Title Font Size (pt)</label>
+                        <input type="number" id="title-font-size" class="input" min="8" max="72" value="16" step="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="axis-font-size" class="label">Axis Labels Font Size (pt)</label>
+                        <input type="number" id="axis-font-size" class="input" min="6" max="48" value="12" step="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="legend-font-size" class="label">Legend Font Size (pt)</label>
+                        <input type="number" id="legend-font-size" class="input" min="6" max="36" value="10" step="1">
                     </div>
                 </div>
-            </div>
-            
-            <!-- Export Configuration -->
-            <div class="config-group">
-                <h3 class="config-group-title">Export Configuration</h3>
                 
-                <div class="form-group">
-                    <label for="chart-format" class="label">Export Format</label>
-                    <select id="chart-format" class="input">
-                        <option value="png">PNG</option>
-                        <option value="svg">SVG</option>
-                        <option value="pdf">PDF</option>
-                    </select>
+                <!-- Chart Options -->
+                <div class="config-group">
+                    <h4 class="config-group-title">Chart Options</h4>
+                    
+                    <div class="form-group">
+                        <label class="label">
+                            <input type="checkbox" id="show-metrics" checked> Show Metrics Overlay
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="label">
+                            <input type="checkbox" id="show-standards" checked> Show Standards Overlay
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="label">
+                            <input type="checkbox" id="show-legend"> Show Legend
+                        </label>
+                    </div>
+                    
+                    <div class="form-group ieee-only" style="display: none;">
+                        <label for="legend-position" class="label">Legend Position</label>
+                        <select id="legend-position" class="input">
+                            <option value="upper left" selected>Top Left</option>
+                            <option value="upper right">Top Right</option>
+                            <option value="lower left">Bottom Left</option>
+                            <option value="lower right">Bottom Right</option>
+                            <option value="center left">Center Left</option>
+                            <option value="center right">Center Right</option>
+                            <option value="upper center">Top Center</option>
+                            <option value="lower center">Bottom Center</option>
+                            <option value="center">Center</option>
+                            <option value="best">Auto (Best Fit)</option>
+                        </select>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="chart-dpi" class="label">Resolution (DPI)</label>
-                    <select id="chart-dpi" class="input">
-                        <option value="72">72 DPI (Screen)</option>
-                        <option value="150">150 DPI (Web)</option>
-                        <option value="300" selected>300 DPI (Print)</option>
-                        <option value="600">600 DPI (High Quality)</option>
-                        <option value="custom">Custom</option>
-                    </select>
-                </div>
-                
-                <div class="form-group" id="custom-dpi-group" style="display: none;">
-                    <label for="custom-dpi" class="label">Custom DPI</label>
-                    <input type="number" id="custom-dpi" class="input" min="50" max="1200" value="300">
-                </div>
-                
-                <div class="form-group">
-                    <label for="chart-width" class="label">Width (inches)</label>
-                    <input type="number" id="chart-width" class="input" min="2" max="20" step="0.1" value="10">
-                </div>
-                
-                <div class="form-group">
-                    <label for="chart-height" class="label">Height (inches)</label>
-                    <input type="number" id="chart-height" class="input" min="2" max="20" step="0.1" value="6">
-                </div>
-                
-                <div class="form-group">
-                    <label for="aspect-ratio-lock" class="label">
-                        <input type="checkbox" id="aspect-ratio-lock" checked> Lock Aspect Ratio
-                    </label>
-                </div>
-                
-                <div class="form-group ieee-only" style="display: none;">
-                    <label for="legend-position" class="label">Legend Position</label>
-                    <select id="legend-position" class="input">
-                        <option value="upper left" selected>Top Left</option>
-                        <option value="upper right">Top Right</option>
-                        <option value="lower left">Bottom Left</option>
-                        <option value="lower right">Bottom Right</option>
-                        <option value="center left">Center Left</option>
-                        <option value="center right">Center Right</option>
-                        <option value="upper center">Top Center</option>
-                        <option value="lower center">Bottom Center</option>
-                        <option value="center">Center</option>
-                        <option value="best">Auto (Best Fit)</option>
-                    </select>
+                <!-- Export Configuration -->
+                <div class="config-group">
+                    <h4 class="config-group-title">Export Configuration</h4>
+                    
+                    <div class="form-group">
+                        <label for="chart-format" class="label">Export Format</label>
+                        <select id="chart-format" class="input">
+                            <option value="png">PNG</option>
+                            <option value="svg">SVG</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="resolution-type" class="label">Resolution Type</label>
+                        <select id="resolution-type" class="input">
+                            <option value="dpi">DPI (Inches)</option>
+                            <option value="pixels">Pixels</option>
+                        </select>
+                    </div>
+                    
+                    <!-- DPI Settings -->
+                    <div id="dpi-settings">
+                        <div class="form-group">
+                            <label for="chart-dpi" class="label">Resolution (DPI)</label>
+                            <select id="chart-dpi" class="input">
+                                <option value="72">72 DPI (Screen)</option>
+                                <option value="150">150 DPI (Web)</option>
+                                <option value="300" selected>300 DPI (Print)</option>
+                                <option value="600">600 DPI (High Quality)</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="custom-dpi-group" style="display: none;">
+                            <label for="custom-dpi" class="label">Custom DPI</label>
+                            <input type="number" id="custom-dpi" class="input" min="50" max="1200" value="300">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="chart-width" class="label">Width (inches)</label>
+                            <input type="number" id="chart-width" class="input" min="2" max="20" step="0.1" value="10">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="chart-height" class="label">Height (inches)</label>
+                            <input type="number" id="chart-height" class="input" min="2" max="20" step="0.1" value="6">
+                        </div>
+                    </div>
+                    
+                    <!-- Pixel Settings -->
+                    <div id="pixel-settings" style="display: none;">
+                        <div class="form-group">
+                            <label for="chart-width-px" class="label">Width (pixels)</label>
+                            <input type="number" id="chart-width-px" class="input" min="200" max="4000" value="1200">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="chart-height-px" class="label">Height (pixels)</label>
+                            <input type="number" id="chart-height-px" class="input" min="200" max="4000" value="800">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="label">
+                            <input type="checkbox" id="aspect-ratio-lock" checked> Lock Aspect Ratio
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
