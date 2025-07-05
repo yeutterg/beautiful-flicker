@@ -451,6 +451,12 @@ function setupSlider(sliderId) {
 
 // Chart Generation
 function updateChart() {
+    // If IEEE chart and we have manual points but no session, use manual-only endpoint
+    if (appState.currentChartType === 'ieee' && appState.manualPoints.length > 0 && !appState.sessionId) {
+        generateManualOnlyIEEEChart();
+        return;
+    }
+    
     if (!appState.sessionId) return;
     
     showLoading();
@@ -484,6 +490,47 @@ function updateChart() {
     .catch(error => {
         console.error('Chart generation error:', error);
         showError('Failed to generate chart');
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
+function generateManualOnlyIEEEChart() {
+    if (appState.manualPoints.length === 0) {
+        elements.chartDisplay.innerHTML = '<p>Add manual points to view IEEE chart</p>';
+        return;
+    }
+    
+    showLoading();
+    
+    const config = { 
+        ...appState.chartSettings,
+        manual_points: appState.manualPoints 
+    };
+    
+    fetch('/api/chart/ieee/manual', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            config: config
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.chart && data.chart.image) {
+                elements.chartDisplay.innerHTML = `<img src="${data.chart.image}" alt="IEEE Chart with Manual Points" style="max-width: 100%; height: auto;">`;
+            }
+        } else {
+            showError(data.error || 'Failed to generate manual IEEE chart');
+        }
+    })
+    .catch(error => {
+        console.error('Manual IEEE chart generation error:', error);
+        showError('Failed to generate manual IEEE chart');
     })
     .finally(() => {
         hideLoading();
@@ -625,8 +672,8 @@ function handleAddManualPoint() {
     // Update display
     updateManualPointsDisplay();
     
-    // If IEEE chart is currently active, update it
-    if (appState.currentChartType === 'ieee' && appState.sessionId) {
+    // If IEEE chart is currently active, update it (works with or without session data)
+    if (appState.currentChartType === 'ieee') {
         updateChart();
     }
     
@@ -659,8 +706,8 @@ function removeManualPoint(pointId) {
     appState.manualPoints = appState.manualPoints.filter(p => p.id !== pointId);
     updateManualPointsDisplay();
     
-    // If IEEE chart is currently active, update it
-    if (appState.currentChartType === 'ieee' && appState.sessionId) {
+    // If IEEE chart is currently active, update it (works with or without session data)
+    if (appState.currentChartType === 'ieee') {
         updateChart();
     }
     

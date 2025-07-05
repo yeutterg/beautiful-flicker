@@ -140,6 +140,47 @@ class ChartGenerator:
             'title': name or 'IEEE PAR 1789-2015 Compliance'
         }
     
+    def generate_ieee_plot_manual_only(self, manual_points: List[Dict[str, Any]], 
+                                      config: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate IEEE PAR 1789-2015 compliance plot with only manual points.
+        
+        Args:
+            manual_points: List of manual point dictionaries
+            config: Chart configuration dictionary
+            
+        Returns:
+            Dictionary with chart data including base64 encoded image
+        """
+        # Prepare data for IEEE plot (only manual points)
+        plot_data = []
+        
+        for point in manual_points:
+            if 'frequency' in point and 'modulation' in point:
+                manual_freq = point['frequency']
+                manual_mod = point['modulation'] / 100  # Convert to decimal
+                manual_label = point.get('label', 'Manual Point')
+                plot_data.append((manual_freq, manual_mod, manual_label))
+        
+        if not plot_data:
+            raise ValueError("No valid manual points provided")
+        
+        # Generate the plot using the original library's exact implementation
+        fig = self._generate_ieee_plot_original(plot_data, config)
+        
+        # Convert to base64
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png', dpi=150, bbox_inches='tight')
+        buffer.seek(0)
+        
+        image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        plt.close(fig)
+        
+        return {
+            'type': 'ieee',
+            'image': f'data:image/png;base64,{image_base64}',
+            'title': 'IEEE PAR 1789-2015 Compliance (Manual Points)'
+        }
+    
     def generate_fft_spectrum(self, data: np.ndarray, 
                              config: Dict[str, Any]) -> Dict[str, Any]:
         """Generate FFT spectrum plot.

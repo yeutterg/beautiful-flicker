@@ -317,6 +317,40 @@ def generate_ieee_chart():
             'error': str(e)
         })
 
+@app.route('/api/chart/ieee/manual', methods=['POST'])
+def generate_ieee_chart_manual_only():
+    """Generate IEEE PAR 1789-2015 compliance chart with only manual points."""
+    try:
+        data = request.get_json()
+        config = data.get('config', {})
+        manual_points = config.get('manual_points', [])
+        
+        if not manual_points:
+            return jsonify({
+                'success': False,
+                'error': 'No manual points provided'
+            })
+        
+        # Create empty analysis data since we only have manual points
+        analysis = {
+            'frequency': 0,  # Dummy value, won't be plotted
+            'percent_flicker': 0  # Dummy value, won't be plotted
+        }
+        
+        # Generate IEEE chart with only manual points
+        chart_result = chart_generator.generate_ieee_plot_manual_only(manual_points, config)
+        
+        return jsonify({
+            'success': True,
+            'chart': chart_result
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
 @app.errorhandler(413)
 def request_entity_too_large(error):
     """Handle file size limit exceeded."""
