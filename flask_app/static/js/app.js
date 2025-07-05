@@ -116,6 +116,7 @@ function setupEventListeners() {
     // File upload
     elements.uploadArea.addEventListener('click', () => elements.fileInput.click());
     elements.uploadArea.addEventListener('dragover', handleDragOver);
+    elements.uploadArea.addEventListener('dragleave', handleDragLeave);
     elements.uploadArea.addEventListener('drop', handleDrop);
     elements.fileInput.addEventListener('change', handleFileSelect);
     
@@ -188,35 +189,33 @@ function handleFileSelect(event) {
     }
 }
 
+// Drag and drop handlers
 function handleDragOver(event) {
     event.preventDefault();
     event.stopPropagation();
-    elements.dropZone.classList.add('drag-over');
+    elements.uploadArea.classList.add('dragover');
 }
 
 function handleDragLeave(event) {
     event.preventDefault();
     event.stopPropagation();
-    elements.dropZone.classList.remove('drag-over');
+    elements.uploadArea.classList.remove('dragover');
 }
 
 function handleDrop(event) {
     event.preventDefault();
     event.stopPropagation();
-    elements.dropZone.classList.remove('drag-over');
+    elements.uploadArea.classList.remove('dragover');
     
     const files = event.dataTransfer.files;
     if (files.length > 0) {
-        processFile(files[0]);
+        const file = files[0];
+        appState.dataLabel = elements.uploadLabel.value || file.name.replace(/\.[^/.]+$/, "");
+        processFile(file);
     }
 }
 
 function processFile(file) {
-    if (file.size > 50 * 1024 * 1024) {
-        showError('File size exceeds 50MB limit');
-        return;
-    }
-    
     const formData = new FormData();
     formData.append('file', file);
     
@@ -228,16 +227,27 @@ function processFile(file) {
     })
     .then(response => response.json())
     .then(data => {
-        hideLoading();
         if (data.success) {
-            handleUploadSuccess(data);
+            appState.sessionId = data.session_id;
+            appState.currentData = data.preview;
+            
+            // Show visualization section
+            elements.visualizationSection.style.display = 'block';
+            
+            // Update chart
+            updateChart();
+            
+            console.log('File processed successfully');
         } else {
             showError(data.error || 'Failed to process file');
         }
     })
     .catch(error => {
+        console.error('Error processing file:', error);
+        showError('Failed to process file');
+    })
+    .finally(() => {
         hideLoading();
-        showError('Network error: ' + error.message);
     });
 }
 
@@ -257,40 +267,107 @@ function loadExamples() {
     fetch('/api/examples')
         .then(response => response.json())
         .then(data => {
-            if (data.success && Array.isArray(data.examples)) {
-                // Clear existing options
-                elements.exampleSelect.innerHTML = '<option value="">Select an example...</option>';
-                // Populate dropdown
-                data.examples.forEach(ex => {
-                    const option = document.createElement('option');
-                    option.value = encodeURIComponent(ex.path); // keep slashes but URI-encode
-                    option.textContent = ex.name;
-                    elements.exampleSelect.appendChild(option);
-                });
+            if (data.success) {
+                populateExamplesGrid(data.examples);
+            } else {
+                showError('Failed to load examples');
             }
         })
-        .catch(error => console.error('Failed to load examples:', error));
+        .catch(error => {
+            console.error('Error loading examples:', error);
+            showError('Failed to load examples');
+        });
 }
 
-function handleExampleSelect(event) {
-    const encodedPath = event.target.value;
-    if (!encodedPath) return;
+function populateExamplesGrid(examples) {
+    elements.examplesGrid.innerHTML = '';
+    
+    examples.forEach(example => {
+        const item = document.createElement('div');
+        item.className = 'example-item';
+        
+        // Handle both string format and object format
+        const exampleName = typeof example === 'string' ? example : example.name;
+        const examplePath = typeof example === 'string' ? example : example.path;
+        
+        item.innerHTML = `
+            <div class="example-name">${exampleName}</div>
+            <div class="example-description">Click to load</div>
+        `;
+        item.addEventListener('click', () => handleExampleSelect(examplePath));
+        elements.examplesGrid.appendChild(item);
+    });
+}
 
+function handleExampleSelect(exampleName) {
+    appState.dataLabel = elements.exampleLabel.value || exampleName;
+    loadExample(exampleName);
+}
+
+function loadExample(exampleName) {
     showLoading();
-    fetch(`/api/example/${encodedPath}`)
+    
+    fetch(`/api/example/${exampleName}`)
         .then(response => response.json())
         .then(data => {
-            hideLoading();
             if (data.success) {
-                handleUploadSuccess(data);
+                appState.sessionId = data.session_id;
+                appState.currentData = data.preview;
+                
+                // Show visualization section
+                elements.visualizationSection.style.display = 'block';
+                
+                // Update chart
+                updateChart();
+                
+                console.log(`Loaded example: ${exampleName}`);
             } else {
                 showError(data.error || 'Failed to load example');
             }
         })
         .catch(error => {
+            console.error('Error loading example:', error);
+            showError('Failed to load example');
+        })
+        .finally(() => {
             hideLoading();
-            showError('Network error: ' + error.message);
         });
+}
+
+function processPastedCSV(csvData) {
+    showLoading();
+    
+    fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ csv_data: csvData })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            appState.sessionId = data.session_id;
+            appState.currentData = data.preview;
+            
+            // Show visualization section
+            elements.visualizationSection.style.display = 'block';
+            
+            // Update chart
+            updateChart();
+            
+            console.log('CSV data processed successfully');
+        } else {
+            showError(data.error || 'Failed to process CSV data');
+        }
+    })
+    .catch(error => {
+        console.error('Error processing CSV data:', error);
+        showError('Failed to process CSV data');
+    })
+    .finally(() => {
+        hideLoading();
+    });
 }
 
 // Upload Success Handler
@@ -565,11 +642,15 @@ function handleExport() {
 
 // UI Helpers
 function showLoading() {
-    elements.loadingOverlay.style.display = 'flex';
+    if (elements.loadingSpinner) {
+        elements.loadingSpinner.style.display = 'block';
+    }
 }
 
 function hideLoading() {
-    elements.loadingOverlay.style.display = 'none';
+    if (elements.loadingSpinner) {
+        elements.loadingSpinner.style.display = 'none';
+    }
 }
 
 function showError(message) {
