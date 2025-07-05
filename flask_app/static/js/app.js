@@ -82,7 +82,6 @@ const elements = {
     // Visualization
     visualizationSection: document.getElementById('visualizationSection'),
     chartConfigSection: document.getElementById('chartConfigSection'),
-    exportSection: document.getElementById('exportSection'),
     chartDisplay: document.getElementById('chartDisplay'),
     loadingSpinner: document.getElementById('loadingOverlay'),
     analysisResults: document.getElementById('analysisResults'),
@@ -117,7 +116,33 @@ const elements = {
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     loadExamples();
+    initializeDefaults();
 });
+
+// Initialize default values
+function initializeDefaults() {
+    // Set default title for initial chart type
+    const defaultTitles = {
+        'waveform': 'Flicker Waveform Analysis',
+        'ieee': 'IEEE 1789 Flicker Analysis',
+        'fft': 'Flicker FFT Analysis',
+        'histogram': 'Flicker Frequency Distribution'
+    };
+    
+    if (!elements.chartTitle.value) {
+        elements.chartTitle.value = defaultTitles[appState.currentChartType] || '';
+        appState.chartSettings.title = elements.chartTitle.value;
+    }
+    
+    // Initialize chart-specific controls visibility
+    const chartTypes = ['waveform', 'ieee', 'fft', 'histogram'];
+    chartTypes.forEach(type => {
+        const controls = document.querySelectorAll(`.${type}-only`);
+        controls.forEach(control => {
+            control.style.display = appState.currentChartType === type ? 'block' : 'none';
+        });
+    });
+}
 
 // Dataset Management Functions
 function addDataset(sessionId, label, analysis) {
@@ -135,6 +160,9 @@ function addDataset(sessionId, label, analysis) {
     if (appState.activeDatasets.length > 0) {
         elements.activeDatasetsSection.style.display = 'block';
     }
+    
+    // Show success feedback
+    showSuccess(`Added dataset: ${label}`);
 }
 
 function removeDataset(index) {
@@ -150,11 +178,20 @@ function removeDataset(index) {
     updateChart();
 }
 
+// Make removeDataset globally accessible
+window.removeDataset = removeDataset;
+
 function clearAllDatasets() {
-    appState.activeDatasets = [];
-    updateDatasetsList();
-    elements.activeDatasetsSection.style.display = 'none';
-    updateChart();
+    if (appState.activeDatasets.length === 0) return;
+    
+    if (confirm(`Are you sure you want to remove all ${appState.activeDatasets.length} datasets?`)) {
+        const count = appState.activeDatasets.length;
+        appState.activeDatasets = [];
+        updateDatasetsList();
+        elements.activeDatasetsSection.style.display = 'none';
+        updateChart();
+        showSuccess(`Removed ${count} datasets`);
+    }
 }
 
 function updateDatasetsList() {
@@ -199,6 +236,17 @@ function setupEventListeners() {
     // Example selection
     elements.exampleSelect.addEventListener('change', handleExampleSelect);
     
+    // Update data label when custom example label changes
+    if (elements.exampleLabel) {
+        elements.exampleLabel.addEventListener('input', () => {
+            // Update data label if an example is selected
+            if (elements.exampleSelect.value) {
+                const selectedText = elements.exampleSelect.options[elements.exampleSelect.selectedIndex].text;
+                appState.dataLabel = elements.exampleLabel.value || selectedText;
+            }
+        });
+    }
+    
     // Chart configuration
     elements.chartTitle.addEventListener('input', updateChartSettings);
     elements.fontFamily.addEventListener('change', updateChartSettings);
@@ -242,14 +290,19 @@ function setupEventListeners() {
                 });
             });
             
-            // Set default chart title if empty
-            if (!elements.chartTitle.value) {
-                const defaultTitles = {
-                    'waveform': 'Flicker Waveform Analysis',
-                    'ieee': 'IEEE 1789 Flicker Analysis',
-                    'fft': 'Flicker FFT Analysis',
-                    'histogram': 'Flicker Frequency Distribution'
-                };
+            // Set appropriate default chart title for chart type
+            const defaultTitles = {
+                'waveform': 'Flicker Waveform Analysis',
+                'ieee': 'IEEE 1789 Flicker Analysis',
+                'fft': 'Flicker FFT Analysis',
+                'histogram': 'Flicker Frequency Distribution'
+            };
+            
+            // Only set default if current title is empty or is a default title from another chart type
+            const currentTitle = elements.chartTitle.value;
+            const isDefaultTitle = Object.values(defaultTitles).includes(currentTitle);
+            
+            if (!currentTitle || isDefaultTitle) {
                 elements.chartTitle.value = defaultTitles[appState.currentChartType] || '';
                 appState.chartSettings.title = elements.chartTitle.value;
             }
@@ -258,8 +311,20 @@ function setupEventListeners() {
             elements.visualizationSection.style.display = 'block';
             
             // Show chart configuration section if we have data
-            if (appState.sessionId || appState.manualPoints.length > 0) {
+            if (appState.sessionId || appState.activeDatasets.length > 0 || appState.manualPoints.length > 0) {
                 elements.chartConfigSection.style.display = 'block';
+            }
+            
+            // Show info about chart type capabilities
+            if (appState.currentChartType === 'ieee' || appState.currentChartType === 'waveform') {
+                if (appState.activeDatasets.length > 1) {
+                    // Multi-dataset support message is already handled in generateMultiDatasetChart
+                }
+            } else {
+                // FFT and histogram only support single dataset
+                if (appState.activeDatasets.length > 1) {
+                    showSuccess(`Switched to ${appState.currentChartType.toUpperCase()} - showing only the most recent dataset`);
+                }
             }
             
             // Update chart
@@ -278,6 +343,12 @@ function setupEventListeners() {
     // Clear all datasets
     if (elements.clearAllDatasets) {
         elements.clearAllDatasets.addEventListener('click', clearAllDatasets);
+    }
+    
+    // Export chart
+    const exportButton = document.getElementById('exportChart');
+    if (exportButton) {
+        exportButton.addEventListener('click', handleExport);
     }
 }
 
@@ -342,7 +413,11 @@ function processFile(file) {
             elements.visualizationSection.style.display = 'block';
             elements.chartConfigSection.style.display = 'block';
             
-            // Display analysis results if available
+            // Display data preview and analysis results if available
+            if (data.preview) {
+                displayDataPreview(data.preview);
+            }
+            
             if (data.analysis) {
                 displayAnalysisResults(data.analysis);
                 elements.analysisResults.style.display = 'block';
@@ -500,7 +575,11 @@ function processPastedCSV(csvData) {
             elements.visualizationSection.style.display = 'block';
             elements.chartConfigSection.style.display = 'block';
             
-            // Display analysis results if available
+            // Display data preview and analysis results if available
+            if (data.preview) {
+                displayDataPreview(data.preview);
+            }
+            
             if (data.analysis) {
                 displayAnalysisResults(data.analysis);
                 elements.analysisResults.style.display = 'block';
@@ -537,7 +616,6 @@ function handleUploadSuccess(data) {
     // Show configuration and visualization sections
     elements.chartConfigSection.style.display = 'block';
     elements.visualizationSection.style.display = 'block';
-    elements.exportSection.style.display = 'block';
     
     // Generate initial chart
     updateChart();
@@ -804,7 +882,10 @@ function generateManualOnlyIEEEChart() {
 
 // Export Handling
 function handleExport() {
-    if (!appState.sessionId) return;
+    if (!appState.sessionId && appState.activeDatasets.length === 0 && appState.manualPoints.length === 0) {
+        showError('No data to export. Please load data, add manual points, or select an example first.');
+        return;
+    }
     
     // Prepare export configuration
     const exportConfig = { ...appState.exportSettings };
@@ -886,6 +967,33 @@ function showError(message) {
     elements.errorModal.style.display = 'flex';
 }
 
+function showSuccess(message) {
+    // Create a temporary success message
+    const successDiv = document.createElement('div');
+    successDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #2D6A2D;
+        color: white;
+        padding: 1rem;
+        border-radius: 4px;
+        z-index: 1000;
+        max-width: 300px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        font-family: var(--font-primary);
+    `;
+    successDiv.textContent = message;
+    document.body.appendChild(successDiv);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        if (successDiv.parentNode) {
+            successDiv.parentNode.removeChild(successDiv);
+        }
+    }, 3000);
+}
+
 // Utility Functions
 function debounce(func, wait) {
     let timeout;
@@ -940,6 +1048,9 @@ function handleAddManualPoint() {
     
     // Update display
     updateManualPointsDisplay();
+    
+    // Show success feedback
+    showSuccess(`Added manual point: ${label} (${frequency} Hz, ${modulation}%)`);
     
     // If this is the first manual point and no session data, automatically switch to IEEE chart
     if (appState.manualPoints.length === 1 && !appState.sessionId) {

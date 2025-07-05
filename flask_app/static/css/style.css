@@ -396,11 +396,43 @@ body {
     justify-content: flex-end;
 }
 
+/* Chart Type Buttons */
+.chart-type-selector {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.chart-type-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: var(--border-width) var(--border-style) var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chart-type-btn:hover {
+    background: var(--color-gray-light);
+}
+
+.chart-type-btn.active {
+    background: var(--color-accent);
+    color: var(--color-bg);
+}
+
 /* Configuration */
 .chart-config-container {
     margin-top: var(--spacing-lg);
     border: var(--border-width) var(--border-style) var(--color-border);
     padding: var(--spacing-md);
+    background: var(--color-bg);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .config-title {
