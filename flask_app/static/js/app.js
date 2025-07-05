@@ -97,6 +97,7 @@ const elements = {
     manualFrequency: document.getElementById('manual-frequency'),
     manualModulation: document.getElementById('manual-modulation'),
     manualLabel: document.getElementById('manual-label'),
+    manualColor: document.getElementById('manual-color'),
     addManualPoint: document.getElementById('add-manual-point'),
     manualPointsList: document.getElementById('manual-points-list'),
     manualPointsContainer: document.getElementById('manual-points-container'),
@@ -142,6 +143,25 @@ function initializeDefaults() {
             control.style.display = appState.currentChartType === type ? 'block' : 'none';
         });
     });
+    
+    // Set random initial color for manual points
+    updateManualPointColor();
+}
+
+// Generate a random color for manual points
+function getRandomColor() {
+    const colors = [
+        '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
+        '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+        '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5'
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+}
+
+function updateManualPointColor() {
+    if (elements.manualColor) {
+        elements.manualColor.value = getRandomColor();
+    }
 }
 
 // Dataset Management Functions
@@ -1015,6 +1035,7 @@ function handleAddManualPoint() {
     const frequency = parseFloat(elements.manualFrequency.value);
     const modulation = parseFloat(elements.manualModulation.value);
     const label = elements.manualLabel.value.trim() || `Point ${appState.manualPoints.length + 1}`;
+    const color = elements.manualColor.value;
     
     if (!frequency || !modulation) {
         showError('Please enter both frequency and modulation values');
@@ -1036,18 +1057,23 @@ function handleAddManualPoint() {
         id: Date.now(),
         frequency: frequency,
         modulation: modulation,
-        label: label
+        label: label,
+        color: color
     };
     
     appState.manualPoints.push(point);
     
-    // Clear inputs
+    // Clear inputs (but keep color for convenience)
     elements.manualFrequency.value = '';
     elements.manualModulation.value = '';
     elements.manualLabel.value = '';
+    // Note: Keeping color unchanged for user convenience
     
     // Update display
     updateManualPointsDisplay();
+    
+    // Set a new random color for the next point
+    updateManualPointColor();
     
     // Show success feedback
     showSuccess(`Added manual point: ${label} (${frequency} Hz, ${modulation}%)`);
@@ -1088,9 +1114,15 @@ function updateManualPointsDisplay() {
         item.className = 'manual-point-item';
         item.innerHTML = `
             <div class="manual-point-info">
-                <strong>${point.label}</strong>: ${point.frequency} Hz, ${point.modulation}%
+                <div class="manual-point-color" style="background-color: ${point.color}"></div>
+                <div class="manual-point-details">
+                    <strong>${point.label}</strong>: ${point.frequency} Hz, ${point.modulation}%
+                </div>
             </div>
-            <button class="manual-point-remove" onclick="removeManualPoint(${point.id})">×</button>
+            <div class="manual-point-controls">
+                <input type="color" value="${point.color}" onchange="updateManualPointColor(${point.id}, this.value)" class="manual-point-color-picker" title="Change color">
+                <button class="manual-point-remove" onclick="removeManualPoint(${point.id})">×</button>
+            </div>
         `;
         elements.manualPointsContainer.appendChild(item);
     });
@@ -1107,6 +1139,22 @@ function removeManualPoint(pointId) {
     
     console.log('Manual point removed');
 }
+
+function updateManualPointColor(pointId, newColor) {
+    const point = appState.manualPoints.find(p => p.id === pointId);
+    if (point) {
+        point.color = newColor;
+        updateManualPointsDisplay();
+        if (appState.currentChartType === 'ieee') {
+            updateChart();
+        }
+        showSuccess(`Updated color for ${point.label}`);
+    }
+}
+
+// Make functions globally accessible
+window.removeManualPoint = removeManualPoint;
+window.updateManualPointColor = updateManualPointColor;
 
 // New chart configuration event handlers
 function handleDpiChange() {

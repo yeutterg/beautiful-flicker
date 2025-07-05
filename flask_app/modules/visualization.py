@@ -116,8 +116,8 @@ class ChartGenerator:
         # Use data_label for legend, fallback to 'Measurement'
         name = config.get('data_label', 'Measurement')
         
-        # Create plot data list
-        plot_data = [(freq, pct_flicker, name)]
+        # Create plot data list with colors (freq, mod, label, color, is_manual)
+        plot_data = [(freq, pct_flicker, name, '#1f77b4', False)]
         
         # Add manual points if provided
         manual_points = config.get('manual_points', [])
@@ -126,7 +126,8 @@ class ChartGenerator:
                 manual_freq = point['frequency']
                 manual_mod = point['modulation'] / 100  # Convert to decimal
                 manual_label = point.get('label', 'Manual Point')
-                plot_data.append((manual_freq, manual_mod, manual_label))
+                manual_color = point.get('color', '#ff7f0e')
+                plot_data.append((manual_freq, manual_mod, manual_label, manual_color, True))
         
         # Generate the plot using the original library's exact implementation
         fig = self._generate_ieee_plot_original(plot_data, config)
@@ -156,7 +157,7 @@ class ChartGenerator:
         Returns:
             Dictionary with chart data including base64 encoded image
         """
-        # Prepare data for IEEE plot (only manual points)
+        # Prepare data for IEEE plot (only manual points) with colors
         plot_data = []
         
         for point in manual_points:
@@ -164,7 +165,8 @@ class ChartGenerator:
                 manual_freq = point['frequency']
                 manual_mod = point['modulation'] / 100  # Convert to decimal
                 manual_label = point.get('label', 'Manual Point')
-                plot_data.append((manual_freq, manual_mod, manual_label))
+                manual_color = point.get('color', '#ff7f0e')
+                plot_data.append((manual_freq, manual_mod, manual_label, manual_color, True))
         
         if not plot_data:
             raise ValueError("No valid manual points provided")
@@ -705,15 +707,21 @@ class ChartGenerator:
         highrisk = plt.Polygon(highrisk_region, fc='red', alpha=0.2, label='High Risk')
         ax.add_patch(highrisk)
         
-        # Plot all data points with distinct colors and markers
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+        # Plot all data points with custom colors and markers
+        default_colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
         
         # Plot the actual data points
-        for i, (freq, mod, label) in enumerate(plot_data):
-            color = colors[i % len(colors)]
+        for i, point_data in enumerate(plot_data):
+            # Handle both old format (3 items) and new format (5 items)
+            if len(point_data) == 5:
+                freq, mod, label, color, is_manual = point_data
+            else:
+                freq, mod, label = point_data
+                color = default_colors[i % len(default_colors)]
+                is_manual = 'Manual:' in label
             
             # Use different markers for manual points vs data points
-            if 'Manual:' in label:
+            if is_manual:
                 marker = 's'  # Square for manual points
                 marker_size = 120
                 edge_width = 2
@@ -739,9 +747,16 @@ class ChartGenerator:
         ])
         
         # Add data point legends
-        for i, (freq, mod, label) in enumerate(plot_data):
-            color = colors[i % len(colors)]
-            marker = 's' if 'Manual:' in label else 'o'
+        for i, point_data in enumerate(plot_data):
+            # Handle both old format (3 items) and new format (5 items)
+            if len(point_data) == 5:
+                freq, mod, label, color, is_manual = point_data
+            else:
+                freq, mod, label = point_data
+                color = default_colors[i % len(default_colors)]
+                is_manual = 'Manual:' in label
+            
+            marker = 's' if is_manual else 'o'
             legend_elements.append(plt.Line2D([0], [0], marker=marker, color='w', 
                                             markerfacecolor=color, markersize=8, 
                                             label=f'{label}: {freq:.1f} Hz, {mod*100:.1f}%'))

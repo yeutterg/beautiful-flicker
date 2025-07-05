@@ -139,6 +139,25 @@ body {
     letter-spacing: 0.05em;
 }
 
+.color-input {
+    width: 60px;
+    height: 40px;
+    padding: 2px;
+    border: var(--border-width) var(--border-style) var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    background: none;
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 2px;
+}
+
 .input,
 .select,
 .textarea {
@@ -394,6 +413,81 @@ body {
     display: flex;
     gap: var(--spacing-sm);
     justify-content: flex-end;
+}
+
+/* Manual Points Display */
+.manual-point-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+}
+
+.manual-point-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.manual-point-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+.manual-point-details {
+    font-size: 0.875rem;
+}
+
+.manual-point-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.manual-point-color-picker {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    background: none;
+}
+
+.manual-point-color-picker::-webkit-color-swatch-wrapper {
+    padding: 2px;
+}
+
+.manual-point-color-picker::-webkit-color-swatch {
+    border: none;
+    border-radius: 2px;
+}
+
+.manual-point-remove {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--color-error);
+    background: var(--color-error);
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.manual-point-remove:hover {
+    background: #8B0000;
 }
 
 /* Chart Type Buttons */
