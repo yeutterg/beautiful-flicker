@@ -1129,7 +1129,7 @@ function handleExport() {
         body: JSON.stringify({
             session_id: appState.sessionId || (appState.activeDatasets.length > 0 ? appState.activeDatasets[0].sessionId : null),
             chart_type: appState.currentChartType,
-            config: config
+            export_config: config
         })
     })
     .then(response => {
@@ -1380,7 +1380,8 @@ function updateAddedPointsSection() {
         const item = document.createElement('div');
         item.className = 'point-item';
         item.dataset.type = 'dataset';
-        item.dataset.index = index;
+        item.dataset.datasetIndex = index;
+        item.setAttribute('data-dataset-index', index);
         item.draggable = true;
         
         // Default color for datasets
@@ -1405,7 +1406,8 @@ function updateAddedPointsSection() {
         const item = document.createElement('div');
         item.className = 'point-item';
         item.dataset.type = 'manual';
-        item.dataset.index = index;
+        item.dataset.manualId = point.id;
+        item.setAttribute('data-manual-id', point.id);
         item.draggable = true;
         item.innerHTML = `
             <input type="checkbox" class="point-checkbox" checked onchange="toggleManualPointVisibility(${point.id})">
@@ -1464,6 +1466,12 @@ function setupPointsDragAndDrop() {
                 container.insertBefore(draggingItem, afterElement);
             }
         });
+        
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            // Reorder the actual data arrays based on the new visual order
+            reorderDataBasedOnDOM();
+        });
     });
 }
 
@@ -1481,6 +1489,35 @@ function getDragAfterElement(container, y) {
             return closest;
         }
     }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// Reorder data arrays based on the new DOM order
+function reorderDataBasedOnDOM() {
+    const pointItems = document.querySelectorAll('.point-item');
+    const newActiveDatasets = [];
+    const newManualPoints = [];
+    
+    pointItems.forEach(item => {
+        const datasetIndex = parseInt(item.getAttribute('data-dataset-index'));
+        const manualId = parseInt(item.getAttribute('data-manual-id'));
+        
+        if (!isNaN(datasetIndex) && appState.activeDatasets[datasetIndex]) {
+            newActiveDatasets.push(appState.activeDatasets[datasetIndex]);
+        } else if (!isNaN(manualId)) {
+            const manualPoint = appState.manualPoints.find(p => p.id === manualId);
+            if (manualPoint) {
+                newManualPoints.push(manualPoint);
+            }
+        }
+    });
+    
+    // Update the state arrays
+    appState.activeDatasets = newActiveDatasets;
+    appState.manualPoints = newManualPoints;
+    
+    // Update the chart and analysis table
+    updateChart();
+    updateAnalysisTable();
 }
 
 // Update dataset color

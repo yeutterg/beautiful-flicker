@@ -574,8 +574,13 @@ class ChartGenerator:
         ax.add_patch(norisk)
         
         # Plot low risk region (yellow) - extend to 100 kHz
-        lowrisk_region = [[1, 0.001], [1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], 
-                         [max_freq, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
+        # Note: The low risk region doesn't extend beyond 3000Hz - it has a vertical line at 1200Hz up to 1, then to 3000Hz at 1
+        if max_freq > 3000:
+            lowrisk_region = [[1, 0.001], [1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], 
+                             [3000, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
+        else:
+            lowrisk_region = [[1, 0.001], [1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], 
+                             [3000, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
         lowrisk = plt.Polygon(lowrisk_region, fc='yellow', alpha=0.3, label='Low Risk')
         ax.add_patch(lowrisk)
         
@@ -724,8 +729,13 @@ class ChartGenerator:
         ax.add_patch(norisk)
         
         # Plot low risk region (yellow) - extend to 100 kHz
-        lowrisk_region = [[1, 0.001], [1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], 
-                         [max_freq, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
+        # Note: The low risk region doesn't extend beyond 3000Hz - it has a vertical line at 1200Hz up to 1, then to 3000Hz at 1
+        if max_freq > 3000:
+            lowrisk_region = [[1, 0.001], [1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], 
+                             [3000, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
+        else:
+            lowrisk_region = [[1, 0.001], [1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], 
+                             [3000, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
         lowrisk = plt.Polygon(lowrisk_region, fc='yellow', alpha=0.3, label='Low Risk')
         ax.add_patch(lowrisk)
         
@@ -770,7 +780,7 @@ class ChartGenerator:
         legend_elements.extend([
             plt.Rectangle((0, 0), 1, 1, facecolor='#2ca02c', alpha=0.3, label='No Risk'),
             plt.Rectangle((0, 0), 1, 1, facecolor='yellow', alpha=0.3, label='Low Risk'),
-            plt.Rectangle((0, 0), 1, 1, facecolor='lightcoral', alpha=0.3, label='High Risk')
+            plt.Rectangle((0, 0), 1, 1, facecolor='red', alpha=0.2, label='High Risk')
         ])
         
         # Add data point legends
