@@ -547,6 +547,33 @@ body {
     background: var(--color-bg);
 }
 
+/* Analysis Table */
+.analysis-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    background: white;
+}
+
+.analysis-table th,
+.analysis-table td {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    text-align: left;
+    border: 1px solid var(--color-border);
+}
+
+.analysis-table th {
+    background: var(--color-gray-light);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.analysis-table tbody tr:hover {
+    background: var(--color-gray-light);
+}
+
 .added-points-section .section-title {
     font-size: 1.125rem;
     margin-bottom: var(--spacing-sm);
@@ -565,6 +592,38 @@ body {
     border: 1px solid var(--color-border);
     background: var(--color-bg);
     cursor: move;
+    gap: var(--spacing-sm);
+}
+
+.point-color-picker {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    background: none;
+    flex-shrink: 0;
+}
+
+.point-color-picker::-webkit-color-swatch-wrapper {
+    padding: 2px;
+}
+
+.point-color-picker::-webkit-color-swatch {
+    border: none;
+    border-radius: 2px;
+}
+
+.point-label-input {
+    font-size: 0.875rem;
+    padding: 2px 4px;
+    min-width: 0;
+}
+
+.point-label-input:focus {
+    outline: 1px solid var(--color-accent);
+    background: white !important;
 }
 
 .point-item.dragging {

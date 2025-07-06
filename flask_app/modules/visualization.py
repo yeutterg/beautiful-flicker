@@ -67,8 +67,9 @@ class ChartGenerator:
         
         # Add title if configured
         if config.get('title'):
+            fontweight = 'bold' if config.get('title_bold', True) else 'normal'
             ax.set_title(config['title'], fontsize=config.get('title_size', 16), 
-                        fontweight='bold', pad=20)
+                        fontweight=fontweight, pad=20)
         
         # Add overlays if configured
         if config.get('show_metrics', True):
@@ -116,8 +117,11 @@ class ChartGenerator:
         # Use data_label for legend, fallback to 'Measurement'
         name = config.get('data_label', 'Measurement')
         
+        # Get color from config or use default
+        color = config.get('data_color', '#1f77b4')
+        
         # Create plot data list with colors (freq, mod, label, color, is_manual)
-        plot_data = [(freq, pct_flicker, name, '#1f77b4', False)]
+        plot_data = [(freq, pct_flicker, name, color, False)]
         
         # Add manual points if provided
         manual_points = config.get('manual_points', [])
@@ -238,8 +242,9 @@ class ChartGenerator:
         
         # Add title if configured
         if config.get('title'):
+            fontweight = 'bold' if config.get('title_bold', True) else 'normal'
             ax.set_title(config['title'], fontsize=config.get('title_size', 16), 
-                        fontweight='bold', pad=20)
+                        fontweight=fontweight, pad=20)
         
         plt.tight_layout()
         
@@ -284,8 +289,9 @@ class ChartGenerator:
         
         # Add title if configured
         if config.get('title'):
+            fontweight = 'bold' if config.get('title_bold', True) else 'normal'
             ax.set_title(config['title'], fontsize=config.get('title_size', 16), 
-                        fontweight='bold', pad=20)
+                        fontweight=fontweight, pad=20)
         
         plt.tight_layout()
         
@@ -546,10 +552,15 @@ class ChartGenerator:
         ax.grid(which='both', alpha=0.3)
         ax.set_axisbelow(True)
         
-        # Set custom tick labels for x-axis (1, 10, 100, 1000, 10000, 100000)
-        x_ticks = [1, 10, 100, 1000, 10000, 100000]
+        # Set custom tick labels for x-axis based on max_freq
+        if max_freq > 10000:
+            x_ticks = [1, 10, 100, 1000, 10000, 100000]
+            x_labels = ['1', '10', '100', '1k', '10k', '100k']
+        else:
+            x_ticks = [1, 10, 100, 1000]
+            x_labels = ['1', '10', '100', '1k']
         ax.set_xticks(x_ticks)
-        ax.set_xticklabels(['1', '10', '100', '1k', '10k', '100k'])
+        ax.set_xticklabels(x_labels)
         
         # Set custom tick labels for y-axis (0.1%, 1%, 10%, 100%)
         y_ticks = [0.001, 0.01, 0.1, 1]
@@ -559,7 +570,7 @@ class ChartGenerator:
         # Plot no risk region (green) - extend to 100 kHz
         norisk_region = [[1, min_pct], [1, 0.001], [10, 0.001], [100, 0.01], [100, 0.03], [3000, 1], 
                         [max_freq, 1], [max_freq, min_pct]]
-        norisk = plt.Polygon(norisk_region, fc='green', alpha=0.3, label='No Risk')
+        norisk = plt.Polygon(norisk_region, fc='#2ca02c', alpha=0.3, label='No Risk')
         ax.add_patch(norisk)
         
         # Plot low risk region (yellow) - extend to 100 kHz
@@ -582,8 +593,9 @@ class ChartGenerator:
         
         # Add title if configured
         if config.get('title'):
+            fontweight = 'bold' if config.get('title_bold', True) else 'normal'
             ax.set_title(config['title'], fontsize=config.get('title_size', 16), 
-                        fontweight='bold', pad=20)
+                        fontweight=fontweight, pad=20)
         
         # Apply brutalist styling
         self._apply_brutalist_style(fig, ax)
@@ -667,8 +679,18 @@ class ChartGenerator:
         # Create the IEEE plot manually to have better control
         fig, ax = plt.subplots(figsize=self._get_figsize(config))
         
-        # Set up the plot with IEEE specifications (extended to 100 kHz)
-        max_freq = 100000
+        # Check if any data points are above 10kHz
+        max_data_freq = 3000
+        for point_data in plot_data:
+            if len(point_data) >= 5:
+                freq = point_data[0]
+            else:
+                freq = point_data[0]
+            max_data_freq = max(max_data_freq, freq)
+        
+        # Set up the plot with IEEE specifications
+        # Only extend to 100 kHz if we have data above 10kHz
+        max_freq = 100000 if max_data_freq > 10000 else 3000
         min_pct = 0.001
         
         ax.set_xlim([1, max_freq])
@@ -680,10 +702,15 @@ class ChartGenerator:
         ax.grid(which='both', alpha=0.3)
         ax.set_axisbelow(True)
         
-        # Set custom tick labels for x-axis (1, 10, 100, 1000, 10000, 100000)
-        x_ticks = [1, 10, 100, 1000, 10000, 100000]
+        # Set custom tick labels for x-axis based on max_freq
+        if max_freq > 10000:
+            x_ticks = [1, 10, 100, 1000, 10000, 100000]
+            x_labels = ['1', '10', '100', '1k', '10k', '100k']
+        else:
+            x_ticks = [1, 10, 100, 1000]
+            x_labels = ['1', '10', '100', '1k']
         ax.set_xticks(x_ticks)
-        ax.set_xticklabels(['1', '10', '100', '1k', '10k', '100k'])
+        ax.set_xticklabels(x_labels)
         
         # Set custom tick labels for y-axis (0.1%, 1%, 10%, 100%)
         y_ticks = [0.001, 0.01, 0.1, 1]
@@ -693,7 +720,7 @@ class ChartGenerator:
         # Plot no risk region (green) - extend to 100 kHz
         norisk_region = [[1, min_pct], [1, 0.001], [10, 0.001], [100, 0.01], [100, 0.03], [3000, 1], 
                         [max_freq, 1], [max_freq, min_pct]]
-        norisk = plt.Polygon(norisk_region, fc='green', alpha=0.3, label='No Risk')
+        norisk = plt.Polygon(norisk_region, fc='#2ca02c', alpha=0.3, label='No Risk')
         ax.add_patch(norisk)
         
         # Plot low risk region (yellow) - extend to 100 kHz
@@ -741,7 +768,7 @@ class ChartGenerator:
         
         # Add risk region legend
         legend_elements.extend([
-            plt.Rectangle((0, 0), 1, 1, facecolor='lightgreen', alpha=0.3, label='No Risk'),
+            plt.Rectangle((0, 0), 1, 1, facecolor='#2ca02c', alpha=0.3, label='No Risk'),
             plt.Rectangle((0, 0), 1, 1, facecolor='yellow', alpha=0.3, label='Low Risk'),
             plt.Rectangle((0, 0), 1, 1, facecolor='lightcoral', alpha=0.3, label='High Risk')
         ])
@@ -788,8 +815,9 @@ class ChartGenerator:
         
         # Set title font to match axis labels font family
         if config.get('title'):
+            fontweight = 'bold' if config.get('title_bold', True) else 'normal'
             ax.set_title(config['title'], fontsize=title_size, 
-                        fontfamily=font_family, fontweight='normal', pad=20)
+                        fontfamily=font_family, fontweight=fontweight, pad=20)
         
         # Set axis label fonts
         ax.set_xlabel(ax.get_xlabel(), fontsize=axis_size, fontfamily=font_family)

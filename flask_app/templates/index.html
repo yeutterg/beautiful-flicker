@@ -111,36 +111,6 @@
             </div>
         </section>
         
-        <!-- Analysis Results -->
-        <section id="analysisResults" class="section analysis-results" style="display: none;">
-            <h2 class="section-title">Analysis Results</h2>
-            <div class="results-grid">
-                <div class="result-card">
-                    <h4>Flicker Metrics</h4>
-                    <dl class="result-list">
-                        <dt>Frequency</dt>
-                        <dd id="resultFrequency">--</dd>
-                        <dt>Percent Flicker</dt>
-                        <dd id="resultPercent">--</dd>
-                        <dt>Flicker Index</dt>
-                        <dd id="resultIndex">--</dd>
-                        <dt>RMS Variation</dt>
-                        <dd id="resultRMS">--</dd>
-                    </dl>
-                </div>
-                <div class="result-card">
-                    <h4>Standards Compliance</h4>
-                    <dl class="result-list">
-                        <dt>IEEE 1789-2015</dt>
-                        <dd id="resultIEEE" class="result-status">--</dd>
-                        <dt>California JA8</dt>
-                        <dd id="resultJA8" class="result-status">--</dd>
-                        <dt>WELL v2</dt>
-                        <dd id="resultWELL" class="result-status">--</dd>
-                    </dl>
-                </div>
-            </div>
-        </section>
     </div>
     
     <!-- Right Column: Visualization and Controls -->
@@ -171,7 +141,10 @@
             
             <!-- Added Points Section (moved here) -->
             <div id="addedPointsSection" class="added-points-section" style="display: none;">
-                <h3 class="section-title">Added Points</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 class="section-title" style="margin: 0;">Added Points</h3>
+                    <button id="updateChartFromPoints" class="btn btn-small btn-primary">Update Chart</button>
+                </div>
                 <div id="addedPointsList" class="added-points-list">
                     <!-- Points will be dynamically added here -->
                 </div>
@@ -215,6 +188,12 @@
                         <div class="form-group">
                             <label for="title-font-size" class="label">Title Font Size (pt)</label>
                             <input type="number" id="title-font-size" class="input" min="8" max="72" value="16" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">
+                                <input type="checkbox" id="title-bold" class="checkbox" checked>
+                                <span>Bold Title</span>
+                            </label>
                         </div>
                     </div>
                     

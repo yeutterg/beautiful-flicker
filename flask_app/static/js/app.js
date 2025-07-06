@@ -14,6 +14,7 @@ const appState = {
         title: '',
         font: 'sans-serif',
         title_size: 16,
+        title_bold: true,
         axis_label_size: 12,
         legend_size: 10,
         show_metrics: true,
@@ -24,8 +25,8 @@ const appState = {
         export_dpi: 300,
         width: 10,
         height: 6,
-        width_px: 1200,
-        height_px: 800,
+        width_px: 3000, // Default IEEE chart size
+        height_px: 2000,
         resolution_type: 'pixels', // Default to pixels
         aspect_ratio_locked: true
     },
@@ -199,6 +200,12 @@ function removeDataset(index) {
     if (appState.activeDatasets.length === 0 && elements.activeDatasetsSection) {
         elements.activeDatasetsSection.style.display = 'none';
     }
+    
+    // Update Added Points section
+    updateAddedPointsSection();
+    
+    // Update analysis table
+    updateAnalysisTable();
     
     // Update chart
     updateChart();
@@ -402,6 +409,15 @@ function setupEventListeners() {
         updateButton.addEventListener('click', () => {
             updateChartSettings();
             showSuccess('Chart updated with new settings');
+        });
+    }
+    
+    // Update chart from points button
+    const updateFromPointsBtn = document.getElementById('updateChartFromPoints');
+    if (updateFromPointsBtn) {
+        updateFromPointsBtn.addEventListener('click', () => {
+            updateChart();
+            showSuccess('Chart updated');
         });
     }
 }
@@ -704,55 +720,111 @@ function displayDataPreview(preview) {
 
 // Analysis Results Display
 function displayAnalysisResults(analysis) {
-    // Update results in both sections (left column and collapsible)
-    
-    // Left column results
-    document.getElementById('resultFrequency').textContent = `${analysis.frequency} Hz`;
-    document.getElementById('resultPercent').textContent = `${analysis.percent_flicker}%`;
-    document.getElementById('resultIndex').textContent = analysis.flicker_index;
-    document.getElementById('resultRMS').textContent = analysis.rms_variation ? 
-        `${analysis.rms_variation}%` : '--';
-    
-    // Standards compliance
-    updateStandardsResult('resultIEEE', analysis.ieee_1789_2015);
-    updateStandardsResult('resultJA8', analysis.california_ja8_2019 ? 'Pass' : 'Fail');
-    updateStandardsResult('resultWELL', analysis.well_standard_v2 ? 'Pass' : 'Fail');
-    
-    // Show the collapsible analysis results in the visualization area
+    // Only show in the collapsible analysis results in the visualization area
     const analysisWrapper = document.getElementById('analysisResultsWrapper');
     const analysisContent = document.querySelector('#analysisResultsWrapper .analysis-results-content');
     
     if (analysisWrapper && analysisContent) {
-        analysisWrapper.style.display = 'block';
-        analysisContent.innerHTML = `
-            <div class="results-grid">
-                <div class="result-card">
-                    <h4>Flicker Metrics</h4>
-                    <dl class="result-list">
-                        <dt>Frequency</dt>
-                        <dd>${analysis.frequency} Hz</dd>
-                        <dt>Percent Flicker</dt>
-                        <dd>${analysis.percent_flicker}%</dd>
-                        <dt>Flicker Index</dt>
-                        <dd>${analysis.flicker_index}</dd>
-                        <dt>RMS Variation</dt>
-                        <dd>${analysis.rms_variation ? analysis.rms_variation + '%' : '--'}</dd>
-                    </dl>
-                </div>
-                <div class="result-card">
-                    <h4>Standards Compliance</h4>
-                    <dl class="result-list">
-                        <dt>IEEE 1789-2015</dt>
-                        <dd class="result-status" data-status="${getStatusClass(analysis.ieee_1789_2015)}">${analysis.ieee_1789_2015}</dd>
-                        <dt>California JA8</dt>
-                        <dd class="result-status" data-status="${analysis.california_ja8_2019 ? 'pass' : 'fail'}">${analysis.california_ja8_2019 ? 'Pass' : 'Fail'}</dd>
-                        <dt>WELL v2</dt>
-                        <dd class="result-status" data-status="${analysis.well_standard_v2 ? 'pass' : 'fail'}">${analysis.well_standard_v2 ? 'Pass' : 'Fail'}</dd>
-                    </dl>
-                </div>
-            </div>
-        `;
+        // Update the table whenever a new dataset is added
+        updateAnalysisTable();
     }
+}
+
+// Update the analysis table with all data points
+function updateAnalysisTable() {
+    const analysisWrapper = document.getElementById('analysisResultsWrapper');
+    const analysisContent = document.querySelector('#analysisResultsWrapper .analysis-results-content');
+    
+    if (!analysisWrapper || !analysisContent) return;
+    
+    // Combine all data sources
+    const allDataPoints = [];
+    
+    // Add datasets
+    appState.activeDatasets.forEach((dataset, index) => {
+        allDataPoints.push({
+            type: 'dataset',
+            label: dataset.label,
+            frequency: dataset.analysis.frequency,
+            percentFlicker: dataset.analysis.percent_flicker,
+            flickerIndex: dataset.analysis.flicker_index,
+            rmsVariation: dataset.analysis.rms_variation,
+            ieee: dataset.analysis.ieee_1789_2015,
+            ja8: dataset.analysis.california_ja8_2019,
+            well: dataset.analysis.well_standard_v2,
+            color: '#1f77b4' // Default color for datasets
+        });
+    });
+    
+    // Add manual points
+    appState.manualPoints.forEach(point => {
+        allDataPoints.push({
+            type: 'manual',
+            label: point.label,
+            frequency: point.frequency,
+            percentFlicker: point.modulation,
+            flickerIndex: '--',
+            rmsVariation: '--',
+            ieee: 'Manual Point',
+            ja8: '--',
+            well: '--',
+            color: point.color
+        });
+    });
+    
+    if (allDataPoints.length === 0) {
+        analysisWrapper.style.display = 'none';
+        return;
+    }
+    
+    analysisWrapper.style.display = 'block';
+    
+    // Build table HTML
+    let tableHTML = `
+        <table class="analysis-table">
+            <thead>
+                <tr>
+                    <th>Data Point</th>
+                    <th>Frequency (Hz)</th>
+                    <th>% Flicker</th>
+                    <th>Flicker Index</th>
+                    <th>RMS Variation</th>
+                    <th>IEEE 1789-2015</th>
+                    <th>CA JA8</th>
+                    <th>WELL v2</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    allDataPoints.forEach(point => {
+        const ieeeClass = getStatusClass(point.ieee);
+        const ja8Class = point.ja8 === true || point.ja8 === 'Pass' ? 'pass' : (point.ja8 === false || point.ja8 === 'Fail' ? 'fail' : '');
+        const wellClass = point.well === true || point.well === 'Pass' ? 'pass' : (point.well === false || point.well === 'Fail' ? 'fail' : '');
+        
+        tableHTML += `
+            <tr>
+                <td>
+                    <span class="point-color" style="display: inline-block; width: 12px; height: 12px; background-color: ${point.color}; border: 1px solid #000; margin-right: 5px;"></span>
+                    ${point.label}
+                </td>
+                <td>${point.frequency}</td>
+                <td>${point.percentFlicker}${typeof point.percentFlicker === 'number' ? '%' : ''}</td>
+                <td>${point.flickerIndex}</td>
+                <td>${point.rmsVariation}${point.rmsVariation !== '--' && point.rmsVariation != null ? '%' : ''}</td>
+                <td class="result-status" data-status="${ieeeClass}">${point.ieee}</td>
+                <td class="result-status" data-status="${ja8Class}">${point.ja8 === true ? 'Pass' : (point.ja8 === false ? 'Fail' : point.ja8)}</td>
+                <td class="result-status" data-status="${wellClass}">${point.well === true ? 'Pass' : (point.well === false ? 'Fail' : point.well)}</td>
+            </tr>
+        `;
+    });
+    
+    tableHTML += `
+            </tbody>
+        </table>
+    `;
+    
+    analysisContent.innerHTML = tableHTML;
 }
 
 function getStatusClass(result) {
@@ -834,6 +906,7 @@ function generateMultiDatasetChart() {
     
     const config = { ...appState.chartSettings };
     config.data_label = primaryDataset.label;
+    config.data_color = primaryDataset.color || '#1f77b4';
     
     if (appState.currentChartType === 'ieee' && appState.manualPoints.length > 0) {
         config.manual_points = appState.manualPoints;
@@ -920,8 +993,13 @@ function updateChart() {
         config.manual_points = appState.manualPoints;
     }
     
-    // Include data label for legend
+    // Include data label and color for legend
     config.data_label = appState.dataLabel;
+    
+    // If we have an active dataset, use its color
+    if (appState.activeDatasets.length > 0) {
+        config.data_color = appState.activeDatasets[0].color || '#1f77b4';
+    }
     
     fetch(`/api/chart/${appState.currentChartType}`, {
         method: 'POST',
@@ -1025,6 +1103,19 @@ function handleExport() {
     config.format = elements.chartFormat ? elements.chartFormat.value : 'png';
     const transparentCheckbox = document.getElementById('transparentBg');
     config.transparent_bg = transparentCheckbox ? transparentCheckbox.checked : false;
+    
+    // Include data label and color for export
+    if (appState.activeDatasets.length > 0) {
+        config.data_label = appState.activeDatasets[0].label;
+        config.data_color = appState.activeDatasets[0].color || '#1f77b4';
+    } else if (appState.dataLabel) {
+        config.data_label = appState.dataLabel;
+    }
+    
+    // Include manual points for IEEE charts
+    if (appState.currentChartType === 'ieee' && appState.manualPoints.length > 0) {
+        config.manual_points = appState.manualPoints;
+    }
     
     // Skip the exportConfig part as it's not needed with the new config approach
     
@@ -1291,11 +1382,15 @@ function updateAddedPointsSection() {
         item.dataset.type = 'dataset';
         item.dataset.index = index;
         item.draggable = true;
+        
+        // Default color for datasets
+        const color = dataset.color || '#1f77b4';
+        
         item.innerHTML = `
             <input type="checkbox" class="point-checkbox" checked onchange="toggleDatasetVisibility(${index})">
-            <div class="point-color" style="background-color: #1f77b4"></div>
+            <input type="color" value="${color}" onchange="updateDatasetColor(${index}, this.value)" class="point-color-picker" title="Change color">
             <div class="point-info">
-                <strong>${dataset.label}</strong>
+                <input type="text" value="${dataset.label}" onchange="updateDatasetLabel(${index}, this.value)" class="point-label-input" style="font-weight: bold; border: none; background: transparent; width: 100%;">
                 <br><small>${dataset.analysis.frequency} Hz, ${dataset.analysis.percent_flicker}%</small>
             </div>
             <div class="point-controls">
@@ -1314,13 +1409,13 @@ function updateAddedPointsSection() {
         item.draggable = true;
         item.innerHTML = `
             <input type="checkbox" class="point-checkbox" checked onchange="toggleManualPointVisibility(${point.id})">
-            <div class="point-color" style="background-color: ${point.color}"></div>
+            <input type="color" value="${point.color}" onchange="updateManualPointColor(${point.id}, this.value)" class="point-color-picker" title="Change color">
             <div class="point-info">
-                <strong>${point.label}</strong>
+                <input type="text" value="${point.label}" onchange="updateManualPointLabel(${point.id}, this.value)" class="point-label-input" style="font-weight: bold; border: none; background: transparent; width: 100%;">
                 <br><small>${point.frequency} Hz, ${point.modulation}%</small>
             </div>
             <div class="point-controls">
-                <button class="btn btn-small" onclick="removeManualPoint(${point.id})">×</button>
+                <button class="btn btn-small" onclick="removeManualPoint(${point.id})">Remove</button>
             </div>
         `;
         addedPointsList.appendChild(item);
@@ -1388,9 +1483,41 @@ function getDragAfterElement(container, y) {
     }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
+// Update dataset color
+function updateDatasetColor(index, newColor) {
+    if (appState.activeDatasets[index]) {
+        appState.activeDatasets[index].color = newColor;
+        updateChart();
+        updateAnalysisTable();
+        showSuccess(`Updated color for ${appState.activeDatasets[index].label}`);
+    }
+}
+
+// Update dataset label
+function updateDatasetLabel(index, newLabel) {
+    if (appState.activeDatasets[index]) {
+        appState.activeDatasets[index].label = newLabel;
+        updateChart();
+        updateAnalysisTable();
+    }
+}
+
+// Update manual point label
+function updateManualPointLabel(pointId, newLabel) {
+    const point = appState.manualPoints.find(p => p.id === pointId);
+    if (point) {
+        point.label = newLabel;
+        updateChart();
+        updateAnalysisTable();
+    }
+}
+
 // Make new functions globally accessible
 window.toggleDatasetVisibility = toggleDatasetVisibility;
 window.toggleManualPointVisibility = toggleManualPointVisibility;
+window.updateDatasetColor = updateDatasetColor;
+window.updateDatasetLabel = updateDatasetLabel;
+window.updateManualPointLabel = updateManualPointLabel;
 
 // Toggle collapsible sections
 function toggleCollapsible(button) {
@@ -1464,6 +1591,12 @@ function updateChartSettings() {
     if (elements.legendPosition) appState.chartSettings.legend_position = elements.legendPosition.value;
     if (elements.chartFormat) appState.chartSettings.format = elements.chartFormat.value;
     if (elements.aspectRatioLock) appState.chartSettings.aspect_ratio_locked = elements.aspectRatioLock.checked;
+    
+    // Update bold title setting
+    const titleBoldCheckbox = document.getElementById('title-bold');
+    if (titleBoldCheckbox) {
+        appState.chartSettings.title_bold = titleBoldCheckbox.checked;
+    }
     
     // Update DPI if custom is selected
     if (elements.chartDpi && elements.chartDpi.value === 'custom' && elements.customDpi) {
