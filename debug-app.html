@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Beautiful Flicker</title>
+    <link rel="stylesheet" href="flask_app/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Beautiful Flicker Debug Page</h1>
+        
+        <div style="padding: 20px; background: #f5f5f5; margin: 20px 0;">
+            <h2>Console Output</h2>
+            <p>Open browser console to see JavaScript errors</p>
+            <button onclick="testManualPoint()">Test Add Manual Point</button>
+            <button onclick="testLoadExample()">Test Load Example</button>
+            <button onclick="testShowError()">Test Show Error</button>
+        </div>
+        
+        <!-- Minimal required HTML elements -->
+        <div id="errorModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h3 class="modal-title">Error</h3>
+                <p id="errorMessage" class="modal-message"></p>
+                <button id="closeError" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+        
+        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Processing...</p>
+        </div>
+        
+        <!-- Load the real app.js -->
+        <script src="flask_app/static/js/app.js"></script>
+        
+        <script>
+            // Debug functions
+            function testManualPoint() {
+                console.log('Testing manual point addition...');
+                console.log('appState.manualPoints before:', appState.manualPoints);
+                
+                // Check if function exists
+                if (typeof handleAddManualPoint === 'function') {
+                    console.log('handleAddManualPoint function exists');
+                    
+                    // Check if elements exist
+                    console.log('Manual entry elements:', {
+                        frequency: elements.manualFrequency,
+                        modulation: elements.manualModulation,
+                        label: elements.manualLabel,
+                        color: elements.manualColor,
+                        button: elements.addManualPoint
+                    });
+                    
+                    // Try to add a point programmatically
+                    if (elements.manualFrequency && elements.manualModulation) {
+                        elements.manualFrequency.value = '1000';
+                        elements.manualModulation.value = '10';
+                        elements.manualLabel.value = 'Test Point';
+                        handleAddManualPoint();
+                        console.log('appState.manualPoints after:', appState.manualPoints);
+                    } else {
+                        console.error('Manual entry elements are missing!');
+                    }
+                } else {
+                    console.error('handleAddManualPoint function not found!');
+                }
+            }
+            
+            function testLoadExample() {
+                console.log('Testing example loading...');
+                if (typeof loadExample === 'function') {
+                    console.log('loadExample function exists');
+                    // Try to load an example
+                    loadExample('Example_Waveform.csv');
+                } else {
+                    console.error('loadExample function not found!');
+                }
+            }
+            
+            function testShowError() {
+                console.log('Testing error display...');
+                if (typeof showError === 'function') {
+                    showError('This is a test error message');
+                } else {
+                    console.error('showError function not found!');
+                }
+            }
+            
+            // Log initial state
+            console.log('=== Initial State ===');
+            console.log('appState:', typeof appState !== 'undefined' ? appState : 'undefined');
+            console.log('elements:', typeof elements !== 'undefined' ? elements : 'undefined');
+            console.log('Current chart type:', typeof appState !== 'undefined' ? appState.currentChartType : 'N/A');
+            
+            // Check for missing elements
+            if (typeof elements !== 'undefined') {
+                const missingElements = [];
+                for (const [key, value] of Object.entries(elements)) {
+                    if (value === null || value === undefined) {
+                        missingElements.push(key);
+                    }
+                }
+                if (missingElements.length > 0) {
+                    console.warn('Missing elements:', missingElements);
+                }
+            }
+        </script>
+    </div>
+</body>
+</html>

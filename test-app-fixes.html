@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Beautiful Flicker App</title>
+    <link rel="stylesheet" href="flask_app/static/css/style.css">
+</head>
+<body>
+    {% extends "flask_app/templates/base.html" %}
+    {% block content %}
+    <!-- Copy the exact HTML from index.html -->
+    {% include "flask_app/templates/index.html" %}
+    {% endblock %}
+    
+    <script>
+        // Override fetch to simulate API responses
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            console.log('Fetch intercepted:', url, options);
+            
+            // Mock responses
+            if (url === '/api/examples') {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve({
+                        success: true,
+                        examples: [
+                            'Example_Waveform.csv',
+                            'CFL.csv',
+                            'LED_Bulb.csv'
+                        ]
+                    })
+                });
+            }
+            
+            if (url.includes('/api/example/')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve({
+                        success: true,
+                        session_id: 'test-session-123',
+                        preview: {
+                            total_rows: 1000,
+                            duration: 1.0,
+                            sample_rate: 1000,
+                            first_rows: [
+                                { time: 0, value: 0.5 },
+                                { time: 0.001, value: 0.6 },
+                                { time: 0.002, value: 0.7 }
+                            ]
+                        },
+                        analysis: {
+                            frequency: 120,
+                            percent_flicker: 5.2,
+                            flicker_index: 0.12,
+                            rms_variation: 3.8,
+                            ieee_1789_2015: 'No Risk',
+                            california_ja8_2019: true,
+                            well_standard_v2: true
+                        }
+                    })
+                });
+            }
+            
+            if (url.includes('/api/chart/')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve({
+                        success: true,
+                        chart: {
+                            image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+                        }
+                    })
+                });
+            }
+            
+            // Fallback to real fetch for other requests
+            return originalFetch.apply(this, arguments);
+        };
+        
+        // Test functions
+        function runAllTests() {
+            console.log('=== Running All Tests ===');
+            
+            // Test 1: Check if app loaded
+            console.log('Test 1: App State');
+            console.log('- appState exists:', typeof appState !== 'undefined');
+            console.log('- Current chart type:', appState?.currentChartType);
+            console.log('- Resolution type:', appState?.chartSettings?.resolution_type);
+            console.log('- Default font:', appState?.chartSettings?.font);
+            
+            // Test 2: Test manual point addition
+            console.log('\nTest 2: Manual Point Addition');
+            testManualPoint();
+            
+            // Test 3: Test example loading
+            console.log('\nTest 3: Example Loading');
+            testExampleLoading();
+            
+            // Test 4: Test error handling
+            console.log('\nTest 4: Error Handling');
+            testErrorHandling();
+            
+            // Test 5: Check for missing elements
+            console.log('\nTest 5: Missing Elements Check');
+            checkMissingElements();
+        }
+        
+        function testManualPoint() {
+            if (elements.manualFrequency && elements.manualModulation && elements.manualLabel) {
+                elements.manualFrequency.value = '1000';
+                elements.manualModulation.value = '10';
+                elements.manualLabel.value = 'Test Point';
+                
+                const beforeCount = appState.manualPoints.length;
+                handleAddManualPoint();
+                const afterCount = appState.manualPoints.length;
+                
+                console.log('- Manual points before:', beforeCount);
+                console.log('- Manual points after:', afterCount);
+                console.log('- Point added:', afterCount > beforeCount);
+                
+                if (afterCount > beforeCount) {
+                    console.log('- Latest point:', appState.manualPoints[appState.manualPoints.length - 1]);
+                }
+            } else {
+                console.error('- Manual entry elements missing!');
+            }
+        }
+        
+        function testExampleLoading() {
+            if (typeof loadExample === 'function') {
+                console.log('- Loading example...');
+                loadExample('Example_Waveform.csv');
+                
+                // Check after a delay
+                setTimeout(() => {
+                    console.log('- Active datasets:', appState.activeDatasets.length);
+                    console.log('- Session ID:', appState.sessionId);
+                }, 1000);
+            } else {
+                console.error('- loadExample function not found!');
+            }
+        }
+        
+        function testErrorHandling() {
+            try {
+                showError('Test error message');
+                console.log('- showError executed without crash');
+                
+                // Try to close modal
+                if (elements.errorModal && elements.errorModal.style.display !== 'none') {
+                    console.log('- Error modal displayed');
+                    
+                    // Test closing
+                    if (elements.closeError) {
+                        elements.closeError.click();
+                        console.log('- Close button clicked');
+                    }
+                } else {
+                    console.log('- Error modal not visible or missing');
+                }
+            } catch (e) {
+                console.error('- Error handling failed:', e);
+            }
+        }
+        
+        function checkMissingElements() {
+            const requiredElements = [
+                'chartTitle', 'fontFamily', 'titleFontSize', 'axisFontSize', 
+                'legendFontSize', 'legendPosition', 'chartFormat', 'resolutionType',
+                'chartWidthPx', 'chartHeightPx', 'visualizationSection', 
+                'chartConfigSection', 'chartDisplay', 'errorModal', 'errorMessage',
+                'closeError', 'manualFrequency', 'manualModulation', 'manualLabel',
+                'manualColor', 'addManualPoint'
+            ];
+            
+            const missing = [];
+            requiredElements.forEach(key => {
+                if (!elements[key]) {
+                    missing.push(key);
+                }
+            });
+            
+            if (missing.length > 0) {
+                console.warn('- Missing elements:', missing);
+            } else {
+                console.log('- All required elements present');
+            }
+        }
+        
+        // Run tests after page loads
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>

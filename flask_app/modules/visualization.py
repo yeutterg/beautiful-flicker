@@ -533,8 +533,8 @@ class ChartGenerator:
         # Create the IEEE plot manually to have better control
         fig, ax = plt.subplots(figsize=self._get_figsize(config))
         
-        # Set up the plot with IEEE specifications
-        max_freq = 3000
+        # Set up the plot with IEEE specifications (extended to 100 kHz)
+        max_freq = 100000
         min_pct = 0.001
         
         ax.set_xlim([1, max_freq])
@@ -546,25 +546,25 @@ class ChartGenerator:
         ax.grid(which='both', alpha=0.3)
         ax.set_axisbelow(True)
         
-        # Set custom tick labels for x-axis (1, 10, 100, 1000)
-        x_ticks = [1, 10, 100, 1000]
+        # Set custom tick labels for x-axis (1, 10, 100, 1000, 10000, 100000)
+        x_ticks = [1, 10, 100, 1000, 10000, 100000]
         ax.set_xticks(x_ticks)
-        ax.set_xticklabels([str(tick) for tick in x_ticks])
+        ax.set_xticklabels(['1', '10', '100', '1k', '10k', '100k'])
         
         # Set custom tick labels for y-axis (0.1%, 1%, 10%, 100%)
         y_ticks = [0.001, 0.01, 0.1, 1]
         ax.set_yticks(y_ticks)
         ax.set_yticklabels(['0.1%', '1%', '10%', '100%'])
         
-        # Plot no risk region (green)
+        # Plot no risk region (green) - extend to 100 kHz
         norisk_region = [[1, min_pct], [1, 0.001], [10, 0.001], [100, 0.01], [100, 0.03], [3000, 1], 
                         [max_freq, 1], [max_freq, min_pct]]
         norisk = plt.Polygon(norisk_region, fc='green', alpha=0.3, label='No Risk')
         ax.add_patch(norisk)
         
-        # Plot low risk region (yellow)
+        # Plot low risk region (yellow) - extend to 100 kHz
         lowrisk_region = [[1, 0.001], [1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], 
-                         [3000, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
+                         [max_freq, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
         lowrisk = plt.Polygon(lowrisk_region, fc='yellow', alpha=0.3, label='Low Risk')
         ax.add_patch(lowrisk)
         
@@ -667,8 +667,8 @@ class ChartGenerator:
         # Create the IEEE plot manually to have better control
         fig, ax = plt.subplots(figsize=self._get_figsize(config))
         
-        # Set up the plot with IEEE specifications
-        max_freq = 3000
+        # Set up the plot with IEEE specifications (extended to 100 kHz)
+        max_freq = 100000
         min_pct = 0.001
         
         ax.set_xlim([1, max_freq])
@@ -680,25 +680,25 @@ class ChartGenerator:
         ax.grid(which='both', alpha=0.3)
         ax.set_axisbelow(True)
         
-        # Set custom tick labels for x-axis (1, 10, 100, 1000)
-        x_ticks = [1, 10, 100, 1000]
+        # Set custom tick labels for x-axis (1, 10, 100, 1000, 10000, 100000)
+        x_ticks = [1, 10, 100, 1000, 10000, 100000]
         ax.set_xticks(x_ticks)
-        ax.set_xticklabels([str(tick) for tick in x_ticks])
+        ax.set_xticklabels(['1', '10', '100', '1k', '10k', '100k'])
         
         # Set custom tick labels for y-axis (0.1%, 1%, 10%, 100%)
         y_ticks = [0.001, 0.01, 0.1, 1]
         ax.set_yticks(y_ticks)
         ax.set_yticklabels(['0.1%', '1%', '10%', '100%'])
         
-        # Plot no risk region (green)
+        # Plot no risk region (green) - extend to 100 kHz
         norisk_region = [[1, min_pct], [1, 0.001], [10, 0.001], [100, 0.01], [100, 0.03], [3000, 1], 
                         [max_freq, 1], [max_freq, min_pct]]
         norisk = plt.Polygon(norisk_region, fc='green', alpha=0.3, label='No Risk')
         ax.add_patch(norisk)
         
-        # Plot low risk region (yellow)
+        # Plot low risk region (yellow) - extend to 100 kHz
         lowrisk_region = [[1, 0.001], [1, 0.002], [8, 0.002], [90, 0.025], [90, 0.075], [1200, 1], 
-                         [3000, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
+                         [max_freq, 1], [100, 0.03], [100, 0.025], [100, 0.01], [10, 0.001]]
         lowrisk = plt.Polygon(lowrisk_region, fc='yellow', alpha=0.3, label='Low Risk')
         ax.add_patch(lowrisk)
         

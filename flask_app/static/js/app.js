@@ -12,7 +12,7 @@ const appState = {
     dataLabel: 'Data', // Label for current dataset
     chartSettings: {
         title: '',
-        font: 'Inter',
+        font: 'sans-serif',
         title_size: 16,
         axis_label_size: 12,
         legend_size: 10,
@@ -26,7 +26,7 @@ const appState = {
         height: 6,
         width_px: 1200,
         height_px: 800,
-        resolution_type: 'dpi',
+        resolution_type: 'pixels', // Default to pixels
         aspect_ratio_locked: true
     },
     exportSettings: {
@@ -35,7 +35,7 @@ const appState = {
         export_dpi: 300,
         size_preset: 'auto'
     },
-    currentChartType: 'waveform'
+    currentChartType: 'ieee' // Start with IEEE 1789 as first chart
 };
 
 // DOM Elements
@@ -118,6 +118,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     loadExamples();
     initializeDefaults();
+    
+    // Show visualization section immediately with IEEE 1789 selected
+    elements.visualizationSection.style.display = 'block';
+    
+    // Set IEEE 1789 as active
+    document.querySelector('.chart-type-btn[data-chart-type="ieee"]').classList.add('active');
 });
 
 // Initialize default values
@@ -177,7 +183,7 @@ function addDataset(sessionId, label, analysis) {
     updateDatasetsList();
     
     // Show datasets section if multiple datasets
-    if (appState.activeDatasets.length > 0) {
+    if (appState.activeDatasets.length > 0 && elements.activeDatasetsSection) {
         elements.activeDatasetsSection.style.display = 'block';
     }
     
@@ -190,7 +196,7 @@ function removeDataset(index) {
     updateDatasetsList();
     
     // Hide section if no datasets
-    if (appState.activeDatasets.length === 0) {
+    if (appState.activeDatasets.length === 0 && elements.activeDatasetsSection) {
         elements.activeDatasetsSection.style.display = 'none';
     }
     
@@ -208,13 +214,17 @@ function clearAllDatasets() {
         const count = appState.activeDatasets.length;
         appState.activeDatasets = [];
         updateDatasetsList();
-        elements.activeDatasetsSection.style.display = 'none';
+        if (elements.activeDatasetsSection) {
+            elements.activeDatasetsSection.style.display = 'none';
+        }
         updateChart();
         showSuccess(`Removed ${count} datasets`);
     }
 }
 
 function updateDatasetsList() {
+    if (!elements.datasetsList) return;
+    
     elements.datasetsList.innerHTML = '';
     
     if (appState.activeDatasets.length === 0) {
@@ -268,26 +278,26 @@ function setupEventListeners() {
     }
     
     // Chart configuration
-    elements.chartTitle.addEventListener('input', updateChartSettings);
-    elements.fontFamily.addEventListener('change', updateChartSettings);
-    elements.titleFontSize.addEventListener('input', updateChartSettings);
-    elements.axisFontSize.addEventListener('input', updateChartSettings);
-    elements.legendFontSize.addEventListener('input', updateChartSettings);
-    elements.showMetrics.addEventListener('change', updateChartSettings);
-    elements.showStandards.addEventListener('change', updateChartSettings);
-    elements.showLegend.addEventListener('change', updateChartSettings);
-    elements.legendPosition.addEventListener('change', updateChartSettings);
+    if (elements.chartTitle) elements.chartTitle.addEventListener('input', updateChartSettings);
+    if (elements.fontFamily) elements.fontFamily.addEventListener('change', updateChartSettings);
+    if (elements.titleFontSize) elements.titleFontSize.addEventListener('input', updateChartSettings);
+    if (elements.axisFontSize) elements.axisFontSize.addEventListener('input', updateChartSettings);
+    if (elements.legendFontSize) elements.legendFontSize.addEventListener('input', updateChartSettings);
+    if (elements.showMetrics) elements.showMetrics.addEventListener('change', updateChartSettings);
+    if (elements.showStandards) elements.showStandards.addEventListener('change', updateChartSettings);
+    if (elements.showLegend) elements.showLegend.addEventListener('change', updateChartSettings);
+    if (elements.legendPosition) elements.legendPosition.addEventListener('change', updateChartSettings);
     
     // Export configuration
-    elements.resolutionType.addEventListener('change', handleResolutionTypeChange);
-    elements.chartDpi.addEventListener('change', handleDpiChange);
-    elements.customDpi.addEventListener('input', updateChartSettings);
-    elements.chartWidth.addEventListener('input', handleDimensionChange);
-    elements.chartHeight.addEventListener('input', handleDimensionChange);
-    elements.chartWidthPx.addEventListener('input', handlePixelDimensionChange);
-    elements.chartHeightPx.addEventListener('input', handlePixelDimensionChange);
-    elements.aspectRatioLock.addEventListener('change', updateChartSettings);
-    elements.chartFormat.addEventListener('change', updateChartSettings);
+    if (elements.resolutionType) elements.resolutionType.addEventListener('change', handleResolutionTypeChange);
+    if (elements.chartDpi) elements.chartDpi.addEventListener('change', handleDpiChange);
+    if (elements.customDpi) elements.customDpi.addEventListener('input', updateChartSettings);
+    if (elements.chartWidth) elements.chartWidth.addEventListener('input', handleDimensionChange);
+    if (elements.chartHeight) elements.chartHeight.addEventListener('input', handleDimensionChange);
+    if (elements.chartWidthPx) elements.chartWidthPx.addEventListener('input', handlePixelDimensionChange);
+    if (elements.chartHeightPx) elements.chartHeightPx.addEventListener('input', handlePixelDimensionChange);
+    if (elements.aspectRatioLock) elements.aspectRatioLock.addEventListener('change', updateChartSettings);
+    if (elements.chartFormat) elements.chartFormat.addEventListener('change', updateChartSettings);
     
     // Chart type switching
     document.querySelectorAll('.chart-type-btn').forEach(btn => {
@@ -353,12 +363,27 @@ function setupEventListeners() {
     });
     
     // Error modal
-    elements.closeError.addEventListener('click', () => {
-        elements.errorModal.style.display = 'none';
-    });
+    if (elements.closeError) {
+        elements.closeError.addEventListener('click', () => {
+            if (elements.errorModal) {
+                elements.errorModal.style.display = 'none';
+            }
+        });
+    }
+    
+    // Close modal when clicking outside
+    if (elements.errorModal) {
+        elements.errorModal.addEventListener('click', (e) => {
+            if (e.target === elements.errorModal) {
+                elements.errorModal.style.display = 'none';
+            }
+        });
+    }
     
     // Manual entry
-    elements.addManualPoint.addEventListener('click', handleAddManualPoint);
+    if (elements.addManualPoint) {
+        elements.addManualPoint.addEventListener('click', handleAddManualPoint);
+    }
     
     // Clear all datasets
     if (elements.clearAllDatasets) {
@@ -369,6 +394,15 @@ function setupEventListeners() {
     const exportButton = document.getElementById('exportChart');
     if (exportButton) {
         exportButton.addEventListener('click', handleExport);
+    }
+    
+    // Update chart button
+    const updateButton = document.getElementById('updateChart');
+    if (updateButton) {
+        updateButton.addEventListener('click', () => {
+            updateChartSettings();
+            showSuccess('Chart updated with new settings');
+        });
     }
 }
 
@@ -670,7 +704,9 @@ function displayDataPreview(preview) {
 
 // Analysis Results Display
 function displayAnalysisResults(analysis) {
-    // Flicker metrics
+    // Update results in both sections (left column and collapsible)
+    
+    // Left column results
     document.getElementById('resultFrequency').textContent = `${analysis.frequency} Hz`;
     document.getElementById('resultPercent').textContent = `${analysis.percent_flicker}%`;
     document.getElementById('resultIndex').textContent = analysis.flicker_index;
@@ -681,6 +717,53 @@ function displayAnalysisResults(analysis) {
     updateStandardsResult('resultIEEE', analysis.ieee_1789_2015);
     updateStandardsResult('resultJA8', analysis.california_ja8_2019 ? 'Pass' : 'Fail');
     updateStandardsResult('resultWELL', analysis.well_standard_v2 ? 'Pass' : 'Fail');
+    
+    // Show the collapsible analysis results in the visualization area
+    const analysisWrapper = document.getElementById('analysisResultsWrapper');
+    const analysisContent = document.querySelector('#analysisResultsWrapper .analysis-results-content');
+    
+    if (analysisWrapper && analysisContent) {
+        analysisWrapper.style.display = 'block';
+        analysisContent.innerHTML = `
+            <div class="results-grid">
+                <div class="result-card">
+                    <h4>Flicker Metrics</h4>
+                    <dl class="result-list">
+                        <dt>Frequency</dt>
+                        <dd>${analysis.frequency} Hz</dd>
+                        <dt>Percent Flicker</dt>
+                        <dd>${analysis.percent_flicker}%</dd>
+                        <dt>Flicker Index</dt>
+                        <dd>${analysis.flicker_index}</dd>
+                        <dt>RMS Variation</dt>
+                        <dd>${analysis.rms_variation ? analysis.rms_variation + '%' : '--'}</dd>
+                    </dl>
+                </div>
+                <div class="result-card">
+                    <h4>Standards Compliance</h4>
+                    <dl class="result-list">
+                        <dt>IEEE 1789-2015</dt>
+                        <dd class="result-status" data-status="${getStatusClass(analysis.ieee_1789_2015)}">${analysis.ieee_1789_2015}</dd>
+                        <dt>California JA8</dt>
+                        <dd class="result-status" data-status="${analysis.california_ja8_2019 ? 'pass' : 'fail'}">${analysis.california_ja8_2019 ? 'Pass' : 'Fail'}</dd>
+                        <dt>WELL v2</dt>
+                        <dd class="result-status" data-status="${analysis.well_standard_v2 ? 'pass' : 'fail'}">${analysis.well_standard_v2 ? 'Pass' : 'Fail'}</dd>
+                    </dl>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function getStatusClass(result) {
+    if (result === 'Pass' || result === 'No Risk') {
+        return result === 'Pass' ? 'pass' : 'no-risk';
+    } else if (result === 'Low Risk') {
+        return 'low-risk';
+    } else if (result === 'Fail' || result === 'High Risk') {
+        return result === 'Fail' ? 'fail' : 'high-risk';
+    }
+    return '';
 }
 
 function updateStandardsResult(elementId, result) {
@@ -702,11 +785,11 @@ function updateStandardsResult(elementId, result) {
 
 // Chart Configuration
 function updateChartConfig() {
-    appState.chartSettings.title = elements.chartTitle.value;
-    appState.chartSettings.font = elements.fontSelect.value;
-    appState.chartSettings.show_metrics = elements.showMetrics.checked;
-    appState.chartSettings.show_standards = elements.showStandards.checked;
-    appState.chartSettings.show_legend = elements.showLegend.checked;
+    if (elements.chartTitle) appState.chartSettings.title = elements.chartTitle.value;
+    if (elements.fontFamily) appState.chartSettings.font = elements.fontFamily.value;
+    appState.chartSettings.show_metrics = elements.showMetrics ? elements.showMetrics.checked : true;
+    appState.chartSettings.show_standards = elements.showStandards ? elements.showStandards.checked : true;
+    appState.chartSettings.show_legend = elements.showLegend ? elements.showLegend.checked : true;
     
     updateChart();
 }
@@ -794,6 +877,17 @@ function generateMultiDatasetChart() {
 
 // Chart Generation
 function updateChart() {
+    // Always show visualization section if chart type is selected
+    if (elements.visualizationSection) {
+        elements.visualizationSection.style.display = 'block';
+    }
+    
+    // Show chart config section if we have any data
+    const hasData = appState.sessionId || appState.activeDatasets.length > 0 || appState.manualPoints.length > 0;
+    if (hasData && elements.chartConfigSection) {
+        elements.chartConfigSection.style.display = 'block';
+    }
+    
     // Handle multiple datasets for waveform and IEEE charts
     if (['waveform', 'ieee'].includes(appState.currentChartType) && appState.activeDatasets.length > 0) {
         generateMultiDatasetChart();
@@ -907,40 +1001,44 @@ function handleExport() {
         return;
     }
     
-    // Prepare export configuration
-    const exportConfig = { ...appState.exportSettings };
+    // Get current resolution settings
+    const resolutionType = elements.resolutionType ? elements.resolutionType.value : 'pixels';
+    const config = { ...appState.chartSettings };
     
-    if (exportConfig.size_preset === 'letter') {
-        exportConfig.fig_width = 8.5;
-        exportConfig.fig_height = 11;
-    } else if (exportConfig.size_preset === 'a4') {
-        exportConfig.fig_width = 8.27;  // 210mm in inches
-        exportConfig.fig_height = 11.69; // 297mm in inches
-    } else if (exportConfig.size_preset === 'custom') {
-        const widthUnit = document.getElementById('widthUnit').value;
-        const heightUnit = document.getElementById('heightUnit').value;
-        let width = parseFloat(document.getElementById('customWidth').value);
-        let height = parseFloat(document.getElementById('customHeight').value);
-        
-        // Convert to inches if needed
-        if (widthUnit === 'cm') width = width / 2.54;
-        if (heightUnit === 'cm') height = height / 2.54;
-        
-        exportConfig.fig_width = width;
-        exportConfig.fig_height = height;
+    if (resolutionType === 'pixels') {
+        config.resolution_type = 'pixels';
+        config.width_px = elements.chartWidthPx ? parseInt(elements.chartWidthPx.value) : 1200;
+        config.height_px = elements.chartHeightPx ? parseInt(elements.chartHeightPx.value) : 800;
+    } else {
+        config.resolution_type = 'dpi';
+        config.width = elements.chartWidth ? parseFloat(elements.chartWidth.value) : 10;
+        config.height = elements.chartHeight ? parseFloat(elements.chartHeight.value) : 6;
+        if (elements.chartDpi && elements.chartDpi.value === 'custom' && elements.customDpi) {
+            config.export_dpi = parseInt(elements.customDpi.value);
+        } else if (elements.chartDpi) {
+            config.export_dpi = parseInt(elements.chartDpi.value);
+        } else {
+            config.export_dpi = 300;
+        }
     }
+    
+    config.format = elements.chartFormat ? elements.chartFormat.value : 'png';
+    const transparentCheckbox = document.getElementById('transparentBg');
+    config.transparent_bg = transparentCheckbox ? transparentCheckbox.checked : false;
+    
+    // Skip the exportConfig part as it's not needed with the new config approach
     
     showLoading();
     
-    fetch(`/api/export/${appState.exportSettings.format}`, {
+    fetch(`/api/export/${config.format}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            session_id: appState.sessionId,
+            session_id: appState.sessionId || (appState.activeDatasets.length > 0 ? appState.activeDatasets[0].sessionId : null),
             chart_type: appState.currentChartType,
-            export_config: exportConfig
+            config: config
         })
     })
     .then(response => {
@@ -957,7 +1055,7 @@ function handleExport() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `flicker_${appState.currentChartType}.${appState.exportSettings.format}`;
+        a.download = `flicker_${appState.currentChartType}.${config.format}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -983,8 +1081,19 @@ function hideLoading() {
 }
 
 function showError(message) {
-    elements.errorMessage.textContent = message;
-    elements.errorModal.style.display = 'flex';
+    try {
+        if (elements.errorMessage) {
+            elements.errorMessage.textContent = message;
+        }
+        if (elements.errorModal) {
+            elements.errorModal.style.display = 'flex';
+        }
+    } catch (e) {
+        console.error('Error showing error modal:', e);
+        console.error('Original error message:', message);
+        // Fallback to alert if modal fails
+        alert(message);
+    }
 }
 
 function showSuccess(message) {
@@ -1042,8 +1151,8 @@ function handleAddManualPoint() {
         return;
     }
     
-    if (frequency < 1 || frequency > 10000) {
-        showError('Frequency must be between 1 and 10000 Hz');
+    if (frequency < 1 || frequency > 100000) {
+        showError('Frequency must be between 1 and 100000 Hz');
         return;
     }
     
@@ -1101,31 +1210,34 @@ function handleAddManualPoint() {
 }
 
 function updateManualPointsDisplay() {
+    // Update manual points in the input section
     if (appState.manualPoints.length === 0) {
         elements.manualPointsList.style.display = 'none';
-        return;
+    } else {
+        elements.manualPointsList.style.display = 'block';
+        elements.manualPointsContainer.innerHTML = '';
+        
+        appState.manualPoints.forEach(point => {
+            const item = document.createElement('div');
+            item.className = 'manual-point-item';
+            item.innerHTML = `
+                <div class="manual-point-info">
+                    <div class="manual-point-color" style="background-color: ${point.color}"></div>
+                    <div class="manual-point-details">
+                        <strong>${point.label}</strong>: ${point.frequency} Hz, ${point.modulation}%
+                    </div>
+                </div>
+                <div class="manual-point-controls">
+                    <input type="color" value="${point.color}" onchange="updateManualPointColor(${point.id}, this.value)" class="manual-point-color-picker" title="Change color">
+                    <button class="manual-point-remove" onclick="removeManualPoint(${point.id})">×</button>
+                </div>
+            `;
+            elements.manualPointsContainer.appendChild(item);
+        });
     }
     
-    elements.manualPointsList.style.display = 'block';
-    elements.manualPointsContainer.innerHTML = '';
-    
-    appState.manualPoints.forEach(point => {
-        const item = document.createElement('div');
-        item.className = 'manual-point-item';
-        item.innerHTML = `
-            <div class="manual-point-info">
-                <div class="manual-point-color" style="background-color: ${point.color}"></div>
-                <div class="manual-point-details">
-                    <strong>${point.label}</strong>: ${point.frequency} Hz, ${point.modulation}%
-                </div>
-            </div>
-            <div class="manual-point-controls">
-                <input type="color" value="${point.color}" onchange="updateManualPointColor(${point.id}, this.value)" class="manual-point-color-picker" title="Change color">
-                <button class="manual-point-remove" onclick="removeManualPoint(${point.id})">×</button>
-            </div>
-        `;
-        elements.manualPointsContainer.appendChild(item);
-    });
+    // Update Added Points section in visualization area
+    updateAddedPointsSection();
 }
 
 function removeManualPoint(pointId) {
@@ -1156,6 +1268,149 @@ function updateManualPointColor(pointId, newColor) {
 window.removeManualPoint = removeManualPoint;
 window.updateManualPointColor = updateManualPointColor;
 
+// Update Added Points section in visualization area
+function updateAddedPointsSection() {
+    const addedPointsSection = document.getElementById('addedPointsSection');
+    const addedPointsList = document.getElementById('addedPointsList');
+    
+    if (!addedPointsSection || !addedPointsList) return;
+    
+    // Show/hide section based on whether we have points
+    if (appState.manualPoints.length === 0 && appState.activeDatasets.length === 0) {
+        addedPointsSection.style.display = 'none';
+        return;
+    }
+    
+    addedPointsSection.style.display = 'block';
+    addedPointsList.innerHTML = '';
+    
+    // Add datasets
+    appState.activeDatasets.forEach((dataset, index) => {
+        const item = document.createElement('div');
+        item.className = 'point-item';
+        item.dataset.type = 'dataset';
+        item.dataset.index = index;
+        item.draggable = true;
+        item.innerHTML = `
+            <input type="checkbox" class="point-checkbox" checked onchange="toggleDatasetVisibility(${index})">
+            <div class="point-color" style="background-color: #1f77b4"></div>
+            <div class="point-info">
+                <strong>${dataset.label}</strong>
+                <br><small>${dataset.analysis.frequency} Hz, ${dataset.analysis.percent_flicker}%</small>
+            </div>
+            <div class="point-controls">
+                <button class="btn btn-small" onclick="removeDataset(${index})">Remove</button>
+            </div>
+        `;
+        addedPointsList.appendChild(item);
+    });
+    
+    // Add manual points
+    appState.manualPoints.forEach((point, index) => {
+        const item = document.createElement('div');
+        item.className = 'point-item';
+        item.dataset.type = 'manual';
+        item.dataset.index = index;
+        item.draggable = true;
+        item.innerHTML = `
+            <input type="checkbox" class="point-checkbox" checked onchange="toggleManualPointVisibility(${point.id})">
+            <div class="point-color" style="background-color: ${point.color}"></div>
+            <div class="point-info">
+                <strong>${point.label}</strong>
+                <br><small>${point.frequency} Hz, ${point.modulation}%</small>
+            </div>
+            <div class="point-controls">
+                <button class="btn btn-small" onclick="removeManualPoint(${point.id})">×</button>
+            </div>
+        `;
+        addedPointsList.appendChild(item);
+    });
+    
+    // Set up drag and drop
+    setupPointsDragAndDrop();
+}
+
+// Toggle dataset visibility (placeholder for future implementation)
+function toggleDatasetVisibility(index) {
+    // TODO: Implement dataset visibility toggle
+    showSuccess('Dataset visibility toggle coming soon');
+}
+
+// Toggle manual point visibility (placeholder for future implementation)
+function toggleManualPointVisibility(pointId) {
+    // TODO: Implement manual point visibility toggle
+    showSuccess('Point visibility toggle coming soon');
+}
+
+// Set up drag and drop for reordering points
+function setupPointsDragAndDrop() {
+    const pointItems = document.querySelectorAll('.point-item');
+    let draggedItem = null;
+    
+    pointItems.forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+            draggedItem = e.target;
+            e.target.classList.add('dragging');
+        });
+        
+        item.addEventListener('dragend', (e) => {
+            e.target.classList.remove('dragging');
+        });
+        
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const draggingItem = document.querySelector('.dragging');
+            const container = document.getElementById('addedPointsList');
+            const afterElement = getDragAfterElement(container, e.clientY);
+            
+            if (afterElement == null) {
+                container.appendChild(draggingItem);
+            } else {
+                container.insertBefore(draggingItem, afterElement);
+            }
+        });
+    });
+}
+
+// Get the element after which to insert the dragged item
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.point-item:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// Make new functions globally accessible
+window.toggleDatasetVisibility = toggleDatasetVisibility;
+window.toggleManualPointVisibility = toggleManualPointVisibility;
+
+// Toggle collapsible sections
+function toggleCollapsible(button) {
+    const content = button.nextElementSibling;
+    const icon = button.querySelector('.collapsible-icon');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        button.classList.add('active');
+        icon.textContent = '▼';
+    } else {
+        content.style.display = 'none';
+        button.classList.remove('active');
+        icon.textContent = '▶';
+    }
+}
+
+// Make toggleCollapsible globally accessible
+window.toggleCollapsible = toggleCollapsible;
+
 // New chart configuration event handlers
 function handleDpiChange() {
     const dpiValue = elements.chartDpi.value;
@@ -1179,11 +1434,11 @@ function handleDimensionChange(e) {
         if (isWidth) {
             appState.chartSettings.width = newValue;
             appState.chartSettings.height = newValue / currentRatio;
-            elements.chartHeight.value = appState.chartSettings.height.toFixed(1);
+            if (elements.chartHeight) elements.chartHeight.value = appState.chartSettings.height.toFixed(1);
         } else {
             appState.chartSettings.height = newValue;
             appState.chartSettings.width = newValue * currentRatio;
-            elements.chartWidth.value = appState.chartSettings.width.toFixed(1);
+            if (elements.chartWidth) elements.chartWidth.value = appState.chartSettings.width.toFixed(1);
         }
     } else {
         if (isWidth) {
@@ -1198,20 +1453,20 @@ function handleDimensionChange(e) {
 
 function updateChartSettings() {
     // Update all chart settings from form elements
-    appState.chartSettings.title = elements.chartTitle.value;
-    appState.chartSettings.font = elements.fontFamily.value;
-    appState.chartSettings.title_size = parseInt(elements.titleFontSize.value);
-    appState.chartSettings.axis_label_size = parseInt(elements.axisFontSize.value);
-    appState.chartSettings.legend_size = parseInt(elements.legendFontSize.value);
-    appState.chartSettings.show_metrics = elements.showMetrics.checked;
-    appState.chartSettings.show_standards = elements.showStandards.checked;
-    appState.chartSettings.show_legend = elements.showLegend.checked;
-    appState.chartSettings.legend_position = elements.legendPosition.value;
-    appState.chartSettings.format = elements.chartFormat.value;
-    appState.chartSettings.aspect_ratio_locked = elements.aspectRatioLock.checked;
+    if (elements.chartTitle) appState.chartSettings.title = elements.chartTitle.value;
+    if (elements.fontFamily) appState.chartSettings.font = elements.fontFamily.value;
+    if (elements.titleFontSize) appState.chartSettings.title_size = parseInt(elements.titleFontSize.value);
+    if (elements.axisFontSize) appState.chartSettings.axis_label_size = parseInt(elements.axisFontSize.value);
+    if (elements.legendFontSize) appState.chartSettings.legend_size = parseInt(elements.legendFontSize.value);
+    if (elements.showMetrics) appState.chartSettings.show_metrics = elements.showMetrics.checked;
+    if (elements.showStandards) appState.chartSettings.show_standards = elements.showStandards.checked;
+    if (elements.showLegend) appState.chartSettings.show_legend = elements.showLegend.checked;
+    if (elements.legendPosition) appState.chartSettings.legend_position = elements.legendPosition.value;
+    if (elements.chartFormat) appState.chartSettings.format = elements.chartFormat.value;
+    if (elements.aspectRatioLock) appState.chartSettings.aspect_ratio_locked = elements.aspectRatioLock.checked;
     
     // Update DPI if custom is selected
-    if (elements.chartDpi.value === 'custom') {
+    if (elements.chartDpi && elements.chartDpi.value === 'custom' && elements.customDpi) {
         appState.chartSettings.export_dpi = parseInt(elements.customDpi.value);
     }
     
@@ -1263,11 +1518,11 @@ function handlePixelDimensionChange(e) {
         if (isWidth) {
             appState.chartSettings.width_px = newValue;
             appState.chartSettings.height_px = Math.round(newValue / currentRatio);
-            elements.chartHeightPx.value = appState.chartSettings.height_px;
+            if (elements.chartHeightPx) elements.chartHeightPx.value = appState.chartSettings.height_px;
         } else {
             appState.chartSettings.height_px = newValue;
             appState.chartSettings.width_px = Math.round(newValue * currentRatio);
-            elements.chartWidthPx.value = appState.chartSettings.width_px;
+            if (elements.chartWidthPx) elements.chartWidthPx.value = appState.chartSettings.width_px;
         }
     } else {
         if (isWidth) {
